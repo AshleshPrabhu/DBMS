@@ -2,8 +2,10 @@ import express from "express";
 import cors from "cors";
 import userRouter from "./routes/user.routes.js";
 import locationRouter from "./routes/location.routes.js";
-import theaterRouter from "./routes/theater.controller.js";
+import theaterRouter from "./routes/theater.routes.js";
 import screenRouter from "./routes/screen.routes.js";
+import seatRouter from "./routes/seat.routes.js";
+import movieRouter from "./routes/movie.routes.js";
 
 const app = express();
 
@@ -18,6 +20,8 @@ app.use("/api/users", userRouter);
 app.use("/api/locations", locationRouter);
 app.use("/api/theaters", theaterRouter);
 app.use("/api/screens", screenRouter);
+app.use("/api/seats", seatRouter);
+app.use("/api/movies", movieRouter);
 
 
 export default app
