@@ -1,0 +1,78 @@
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE location (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    city VARCHAR(100),
+    state VARCHAR(100),
+    pincode INT,
+    name VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE theater (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    location_id INT NOT NULL,
+    FOREIGN KEY (location_id) REFERENCES location(id) ON DELETE CASCADE
+);
+
+CREATE TABLE screen (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    theater_id INT NOT NULL,
+    name VARCHAR(50),
+    FOREIGN KEY (theater_id) REFERENCES theater(id) ON DELETE CASCADE
+);
+
+CREATE TABLE seat (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    screen_id INT NOT NULL ,
+    seat_number VARCHAR(10) NOT NULL,
+    amount INT NOT NULL,
+    UNIQUE(screen_id, seat_number),
+    FOREIGN KEY (screen_id) REFERENCES screen(id) ON DELETE CASCADE
+);
+
+CREATE TABLE movies (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    image TEXT,
+    about TEXT,
+    reviews INT,
+    actors JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE shows (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    movie_id INT NOT NULL,
+    screen_id INT NOT NULL,
+    movie_time DATETIME NOT NULL,
+    FOREIGN KEY (movie_id) REFERENCES movies(id) ON DELETE CASCADE,
+    FOREIGN KEY (screen_id) REFERENCES screen(id) ON DELETE CASCADE
+);
+
+CREATE TABLE booking (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    show_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (show_id) REFERENCES shows(id) ON DELETE CASCADE
+);
+
+CREATE TABLE booking_seat (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    booking_id INT NOT NULL,
+    seat_id INT NOT NULL,
+    UNIQUE(booking_id, seat_id),
+    FOREIGN KEY (booking_id) REFERENCES booking(id) ON DELETE CASCADE   ,
+    FOREIGN KEY (seat_id) REFERENCES seat(id)
+);
