@@ -8,7 +8,7 @@ export const createScreen = async (req: Request, res: Response) => {
             return res.status(400).json({ message: "Missing required fields: name and theaterId" });
         }
         const [result]: any = await db.execute(
-            "INSERT INTO screens (name, theater_id) VALUES (?, ?)",
+            "INSERT INTO screen (name, theater_id) VALUES (?, ?)",
             [name, theaterId]
         );
         const screenId = result.insertId;
@@ -25,7 +25,7 @@ export const getScreensByTheater = async (req: Request, res: Response) => {
             return res.status(400).json({ message: "Missing required parameter: theaterId" });
         }
         const [screens]: any = await db.execute(
-            "SELECT * FROM screens WHERE theater_id = ?",
+            "SELECT * FROM screen WHERE theater_id = ?",
             [theaterId]
         )
         if(screens.length === 0) {

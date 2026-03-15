@@ -72,8 +72,11 @@ CREATE TABLE booking (
 CREATE TABLE booking_seat (
     id INT AUTO_INCREMENT PRIMARY KEY,
     booking_id INT NOT NULL,
+    show_id INT NOT NULL,
     seat_id INT NOT NULL,
     UNIQUE(booking_id, seat_id),
-    FOREIGN KEY (booking_id) REFERENCES booking(id) ON DELETE CASCADE   ,
+    UNIQUE(show_id, seat_id),
+    FOREIGN KEY (booking_id) REFERENCES booking(id) ON DELETE CASCADE,
+    FOREIGN KEY (show_id) REFERENCES shows(id) ON DELETE CASCADE,
     FOREIGN KEY (seat_id) REFERENCES seat(id)
 );

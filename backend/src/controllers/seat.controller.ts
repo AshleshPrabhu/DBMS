@@ -14,7 +14,7 @@ export const createSeats = async (req: Request, res: Response) => {
             return res.status(400).json({ message: "Missing required fields" });
         }
         for(const seat of seatArr){
-            await db.execute("INSERT INTO seats (screen_id, seat_number, amount) VALUES (?, ?, ?)", [id, seat.seat_number, seat.amount]);
+            await db.execute("INSERT INTO seat (screen_id, seat_number, amount) VALUES (?, ?, ?)", [id, seat.seat_number, seat.amount]);
         }
         return res.status(201).json({ message: "Seats created successfully" });
 
@@ -30,7 +30,7 @@ export const getSeatsByScreenId = async (req: Request, res: Response) => {
         if(!id){    
             return res.status(400).json({ message: "Missing screen id" });
         }
-        const [seats] = await db.execute("SELECT * FROM seats WHERE screen_id = ?", [id]);
+        const [seats] = await db.execute("SELECT * FROM seat WHERE screen_id = ?", [id]);
         return res.status(200).json({ seats });
     } catch (error) {
         return res.status(500).json({ message: "Internal server error while getting seats by screen id" });

@@ -7,6 +7,7 @@ import screenRouter from "./routes/screen.routes.js";
 import seatRouter from "./routes/seat.routes.js";
 import movieRouter from "./routes/movie.routes.js";
 import showsRouter from "./routes/shows.routes.js";
+import bookingRouter from "./routes/booking.routes.js";
 
 const app = express();
 
@@ -24,5 +25,6 @@ app.use("/api/screens", screenRouter);
 app.use("/api/seats", seatRouter);
 app.use("/api/movies", movieRouter);
 app.use("/api/shows", showsRouter);
+app.use("/api/bookings", bookingRouter);
 
 export default app
