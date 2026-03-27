@@ -1,19 +1,14 @@
 import type { FC } from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './HomePage.css';
 import CitySelector from './CitySelector';
 import logo from './assets/logo.png';
-import P1 from './assets/P1.jpg';
-import P2 from './assets/P2.jpg';
-import P3 from './assets/P3.jpg';
-import P4 from './assets/P4.png';
-import P5 from './assets/P5.jpeg';
 
 interface Movie {
   id: number;
-  title: string;
-  poster: string;
+  name: string;
+  image: string;
 }
 
 const HomePage: FC = () => {
@@ -24,6 +19,13 @@ const HomePage: FC = () => {
   const [currentMovieSlide, setCurrentMovieSlide] = useState<number>(0);
   const [showSearchSuggestions, setShowSearchSuggestions] = useState<boolean>(false);
   const [showCityDropdown, setShowCityDropdown] = useState<boolean>(false);
+  const [movies, setMovies] = useState<Movie[]>([]);
+
+  useEffect(() => {
+    fetch('http://localhost:3000/api/movies')
+      .then(res => res.json())
+      .then(data => setMovies(data));
+  }, []);
 
   const cities = ['Bengaluru', 'Mangaluru', 'Delhi', 'Chennai'];
 
@@ -49,18 +51,6 @@ const HomePage: FC = () => {
     'Toxic: A Fairy Tale for Grown-ups': 'toxic',
   };
 
-  // Sample movies data
-  const movies: Movie[] = [
-    { id: 1, title: 'Movie 1', poster: P1 },
-    { id: 2, title: 'Movie 2', poster: P2 },
-    { id: 3, title: 'Movie 3', poster: P3 },
-    { id: 4, title: 'Movie 4', poster: P4 },
-    { id: 5, title: 'Movie 5', poster: P5 },
-    { id: 6, title: 'Movie 6', poster: P1 },
-    { id: 7, title: 'Movie 7', poster: P2 },
-    { id: 8, title: 'Movie 8', poster: P3 },
-  ];
-
   const handleCitySelect = (city: string): void => {
     setSelectedCity(city);
     setShowCitySelector(false);
@@ -78,15 +68,15 @@ const HomePage: FC = () => {
     );
   };
 
-  // const filteredMovies = searchQuery
-  //   ? trendingSearches.filter((search) =>
-  //       search.toLowerCase().includes(searchQuery.toLowerCase())
-  //     ).length > 0
-  //     ? trendingSearches.filter((search) =>
-  //         search.toLowerCase().includes(searchQuery.toLowerCase())
-  //       ).map((_, index) => movies[index % movies.length])
-  //     : []
-  //   : movies;
+  const filteredMovies = searchQuery
+    ? trendingSearches.filter((search) =>
+        search.toLowerCase().includes(searchQuery.toLowerCase())
+      ).length > 0
+      ? trendingSearches.filter((search) =>
+          search.toLowerCase().includes(searchQuery.toLowerCase())
+        ).map((_, index) => movies[index % movies.length])
+      : []
+    : movies;
 
   return (
     <div className="home-page">
@@ -186,13 +176,13 @@ const HomePage: FC = () => {
           </button>
 
           <div className="movies-carousel">
-            {movies
+            {filteredMovies
               .slice(currentMovieSlide, currentMovieSlide + 4)
               .map((movie) => (
-                <div key={movie.id} className="movie-card">
+                <div key={movie.id} className="movie-card" onClick={() => navigate(`/booking/${movie.name}/English/2D`)}>
                   <img
-                    src={movie.poster}
-                    alt={movie.title}
+                    src={movie.image}
+                    alt={movie.name}
                     className="movie-poster"
                   />
                 </div>

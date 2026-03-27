@@ -12,11 +12,13 @@ import P5 from './assets/P5.jpeg';
 const LandingPage: FC = () => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [isLogin, setIsLogin] = useState<boolean>(true);
   const [currentSlide, setCurrentSlide] = useState<number>(0);
+  const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [error, setError] = useState<string>('');
 
-  // Sample movie posters
   const moviePosters: string[] = [P1, P2, P3, P4, P5];
 
   useEffect((): (() => void) => {
@@ -27,14 +29,66 @@ const LandingPage: FC = () => {
     return (): void => clearInterval(interval);
   }, []);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
+  const handleLoginSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    console.log('Login:', { email, password });
-    setEmail('');
-    setPassword('');
-    setShowModal(false);
-    // Navigate to home page after login
-    navigate('/home');
+    setError('');
+    try {
+      const res = await fetch('http://localhost:3000/api/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Login success:', data);
+        setEmail('');
+        setPassword('');
+        setShowModal(false);
+        navigate('/home');
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Login failed');
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      console.error(err);
+    }
+  };
+
+  const handleSignupSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
+    setError('');
+    try {
+      const res = await fetch('http://localhost:3000/api/users/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Signup success:', data);
+        setName('');
+        setEmail('');
+        setPassword('');
+        setIsLogin(true);
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Signup failed');
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      console.error(err);
+    }
+  };
+
+  const handleNameChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    setName(e.target.value);
   };
 
   const handleEmailChange = (e: ChangeEvent<HTMLInputElement>): void => {
@@ -47,7 +101,6 @@ const LandingPage: FC = () => {
 
   return (
     <div className="App">
-      {/* Navigation Bar */}
       <nav className="navbar">
         <div className="navbar-container">
           <div className="logo">
@@ -68,7 +121,6 @@ const LandingPage: FC = () => {
         </div>
       </nav>
 
-      {/* Hero Section */}
       <div className="hero">
         <div className="hero-content">
           <h1>Book Your Movie Tickets Instantly</h1>
@@ -115,33 +167,84 @@ const LandingPage: FC = () => {
             >
               ×
             </button>
-            <h2>Welcome to CineVault</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label htmlFor="email">Email Address</label>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={handleEmailChange}
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="password">Password</label>
-                <input
-                  type="password"
-                  id="password"
-                  value={password}
-                  onChange={handlePasswordChange}
-                  placeholder="Enter your password"
-                  required
-                />
-              </div>
-              <button type="submit" className="submit-btn">Sign In</button>
-            </form>
-            <p className="signup-link">Don't have an account? <a href="#signup">Sign up here</a></p>
+            {isLogin ? (
+              <>
+                <h2>Sign In</h2>
+                {error && <p className="error-message">{error}</p>}
+                <form onSubmit={handleLoginSubmit}>
+                  <div className="form-group">
+                    <label htmlFor="email">Email</label>
+                    <input
+                      type="email"
+                      id="email"
+                      value={email}
+                      onChange={handleEmailChange}
+                      placeholder="Enter your email"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="password">Password</label>
+                    <input
+                      type="password"
+                      id="password"
+                      value={password}
+                      onChange={handlePasswordChange}
+                      placeholder="Enter your password"
+                      required
+                    />
+                  </div>
+                  <button type="submit" className="submit-btn">Sign In</button>
+                </form>
+                <p className="signup-link">
+                  Don't have an account? <a href="#signup" onClick={() => setIsLogin(false)}>Sign up here</a>
+                </p>
+              </>
+            ) : (
+              <>
+                <h2>Sign Up</h2>
+                {error && <p className="error-message">{error}</p>}
+                <form onSubmit={handleSignupSubmit}>
+                  <div className="form-group">
+                    <label htmlFor="name">Name</label>
+                    <input
+                      type="text"
+                      id="name"
+                      value={name}
+                      onChange={handleNameChange}
+                      placeholder="Enter your name"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="email">Email</label>
+                    <input
+                      type="email"
+                      id="email"
+                      value={email}
+                      onChange={handleEmailChange}
+                      placeholder="Enter your email"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="password">Password</label>
+                    <input
+                      type="password"
+                      id="password"
+                      value={password}
+                      onChange={handlePasswordChange}
+                      placeholder="Enter your password"
+                      required
+                    />
+                  </div>
+                  <button type="submit" className="submit-btn">Sign Up</button>
+                </form>
+                <p className="signup-link">
+                  Already have an account? <a href="#signin" onClick={() => setIsLogin(true)}>Sign in here</a>
+                </p>
+              </>
+            )}
           </div>
         </div>
       )}
