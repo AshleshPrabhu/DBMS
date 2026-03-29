@@ -1,74 +1,61 @@
 import type { Request, Response } from "express";
 import { db } from "../config/db.js";
 
-export async function createBooking(req: Request, res: Response) {
-
-    const connection = await db.getConnection();
-
+export async function getShowDetailsByMovieName(req: Request, res: Response) {
     try {
-        const { user_id, show_id, seats } = req.body;
+        const { movieName } = req.params;
 
-        if (!user_id || !show_id || !seats?.length) {
-            return res.status(400).json({
-                message: "User ID, Show ID and seats are required"
-            });
+        if (!movieName) {
+            return res.status(400).json({ message: "Movie name is required" });
         }
 
-        await connection.beginTransaction();
-
-        const [existing]: any = await connection.query(
-            `SELECT bs.seat_id
-            FROM booking_seat bs
-            JOIN booking b ON b.id = bs.booking_id
-            WHERE b.show_id = ?
-            AND bs.seat_id IN (?)`,
-            [show_id, seats]
+        const [shows]: any = await db.execute(
+            `SELECT 
+                s.id as show_id, 
+                s.movie_time, 
+                t.name as theater_name, 
+                sc.name as screen_name,
+                sc.id as screen_id
+            FROM shows s
+            JOIN movies m ON s.movie_id = m.id
+            JOIN screen sc ON s.screen_id = sc.id
+            JOIN theater t ON sc.theater_id = t.id
+            WHERE m.name = ?`,
+            [movieName]
         );
 
-        if (existing.length > 0) {
-            await connection.rollback();
-
-            return res.status(400).json({
-                message: "Seats already booked",
-                bookedSeats: existing.map((s: any) => s.seat_id)
-            });
+        if (shows.length === 0) {
+            return res.status(404).json({ message: "No shows found for this movie" });
         }
 
-        const [result]: any = await connection.execute(
-            `INSERT INTO booking (user_id, show_id)
-            VALUES (?, ?)`,
-            [user_id, show_id]
-        );
+        const showDetails = [];
 
-        const bookingId = result.insertId;
-
-        for (const seat of seats) {
-            await connection.execute(
-                `INSERT INTO booking_seat (booking_id, show_id, seat_id)
-                VALUES (?, ?, ?)`,
-                [bookingId, show_id, seat]
+        for (const show of shows) {
+            const [seats]: any = await db.execute(
+                `SELECT id, seat_number, amount FROM seat WHERE screen_id = ?`,
+                [show.screen_id]
             );
+
+            const [bookedSeats]: any = await db.execute(
+                `SELECT seat_id FROM booking_seat WHERE show_id = ?`,
+                [show.show_id]
+            );
+
+            const bookedSeatIds = bookedSeats.map((s: any) => s.seat_id);
+
+            showDetails.push({
+                ...show,
+                seats,
+                bookedSeatIds
+            });
         }
 
-        await connection.commit();
-
-        return res.status(201).json({
-            booking_id: bookingId,
-            user_id,
-            show_id,
-            seats
-        });
+        return res.json(showDetails);
 
     } catch (error) {
-
-        await connection.rollback();
-
         return res.status(500).json({
             message: "Internal server error",
             error
         });
-
-    } finally {
-        connection.release();
     }
 }

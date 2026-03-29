@@ -8,6 +8,7 @@ import seatRouter from "./routes/seat.routes.js";
 import movieRouter from "./routes/movie.routes.js";
 import showsRouter from "./routes/shows.routes.js";
 import bookingRouter from "./routes/booking.routes.js";
+import paymentRouter from "./routes/payment.routes.js";
 
 const app = express();
 
@@ -26,5 +27,6 @@ app.use("/api/seats", seatRouter);
 app.use("/api/movies", movieRouter);
 app.use("/api/shows", showsRouter);
 app.use("/api/bookings", bookingRouter);
+app.use("/api/payments", paymentRouter);
 
 export default app

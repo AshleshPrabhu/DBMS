@@ -63,6 +63,7 @@ CREATE TABLE booking (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     show_id INT NOT NULL,
+    razorpay_order_id VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -79,4 +80,14 @@ CREATE TABLE booking_seat (
     FOREIGN KEY (booking_id) REFERENCES booking(id) ON DELETE CASCADE,
     FOREIGN KEY (show_id) REFERENCES shows(id) ON DELETE CASCADE,
     FOREIGN KEY (seat_id) REFERENCES seat(id)
+);
+
+CREATE TABLE payment (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    booking_id INT NOT NULL,
+    razorpay_payment_id VARCHAR(255) NOT NULL,
+    razorpay_signature VARCHAR(255) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (booking_id) REFERENCES booking(id) ON DELETE CASCADE
 );

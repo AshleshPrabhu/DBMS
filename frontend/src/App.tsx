@@ -4,6 +4,7 @@ import LandingPage from './LandingPage';
 import HomePage from './HomePage';
 import MovieDetailsPage from './MovieDetailsPage';
 import BookingPage from './BookingPage';
+import ProfilePage from './ProfilePage';
 
 const App: FC = () => {
   return (
@@ -12,7 +13,8 @@ const App: FC = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/movie/:movieTitle" element={<MovieDetailsPage />} />
-        <Route path="/booking/:movieKey/:language/:format" element={<BookingPage />} />
+        <Route path="/booking/:movieTitle/:language/:format" element={<BookingPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>

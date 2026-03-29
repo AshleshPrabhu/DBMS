@@ -51,15 +51,17 @@ export async function login(req: Request, res: Response) {
             "SELECT * FROM users WHERE email = ?",
             [email]
         );
-        
+        console.log(rows);
         if (!rows.length) return res.status(401).json({ message: "Invalid" });
         
         const user = rows[0];
         const match = await bcrypt.compare(password, user.password_hash);
+        console.log("Password match:", match);
+        if (!match) return res.status(401).json({ message: "Invalid credentials" });
+
+        const { password_hash, ...userResponse } = user;
         
-        if (!match) return res.status(401).json({ message: "Invalid" });
-        
-        res.json({ message: "Login success", userId: user.id });
+        res.json({ message: "Login success", user: userResponse });
     } catch (error) {
         return res.status(500).json({
             message: "Internal Server Error while logging in",
@@ -81,6 +83,60 @@ export async function getUser(req: Request, res: Response) {
     catch (error) {
         return res.status(500).json({
             message: "Internal Server Error while fetching user",
+        });
+    }
+}
+
+export async function getBookingHistory(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ message: "User ID is required" });
+        }
+
+        const [bookings]: any = await db.execute(
+            `SELECT 
+                b.id as booking_id,
+                b.created_at,
+                m.name as movie_name,
+                m.image as movie_image,
+                s.movie_time,
+                t.name as theater_name
+            FROM booking b
+            JOIN shows s ON b.show_id = s.id
+            JOIN movies m ON s.movie_id = m.id
+            JOIN screen sc ON s.screen_id = sc.id
+            JOIN theater t ON sc.theater_id = t.id
+            WHERE b.user_id = ?
+            ORDER BY b.created_at DESC`,
+            [id]
+        );
+
+        if (bookings.length === 0) {
+            return res.status(200).json([]);
+        }
+
+        const bookingHistory = [];
+        for (const booking of bookings) {
+            const [seats]: any = await db.execute(
+                `SELECT st.seat_number, st.amount 
+                 FROM booking_seat bs
+                 JOIN seat st ON bs.seat_id = st.id
+                 WHERE bs.booking_id = ?`,
+                [booking.booking_id]
+            );
+            bookingHistory.push({
+                ...booking,
+                seats
+            });
+        }
+
+        res.json(bookingHistory);
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            message: "Internal Server Error while fetching booking history",
         });
     }
 }

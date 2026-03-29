@@ -1,39 +1,167 @@
 import type {FC} from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './BookingPage.css';
 
-interface Theater {
-  name: string;
-  location: string;
-  showtimes: Array<{
-    time: string;
-    format: string;
-    language: string;
-  }>;
+interface Seat {
+  id: number;
+  seat_number: string;
+  amount: number;
+}
+
+interface Show {
+  show_id: number;
+  movie_time: string;
+  theater_name: string;
+  screen_name: string;
+  screen_id: number;
+  seats: Seat[];
+  bookedSeatIds: number[];
 }
 
 const BookingPage: FC = () => {
-  const { movieKey, language, format } = useParams<{ movieKey: string; language: string; format: string }>();
+  const { movieTitle, language, format } = useParams<{ movieTitle: string; language: string; format: string }>();
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(0);
-  const [selectedShowtime, setSelectedShowtime] = useState<string | null>(null);
+  const [shows, setShows] = useState<Show[]>([]);
+  const [selectedShow, setSelectedShow] = useState<Show | null>(null);
   const [showSeatModal, setShowSeatModal] = useState(false);
-  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
+  const [error, setError] = useState<string>('');
   
-  // Pre-booked seats
-  const bookedSeats = ['N3', 'N4', 'N5', 'M1', 'M2', 'M8', 'M9', 'L5', 'L6', 'L7', 'K10', 'K11', 'K12', 'J2', 'J3', 'J14', 'J15', 'H4', 'H5', 'G1', 'G2', 'B8', 'B9', 'A11', 'A12', 'A13'];
+  const loadScript = (src: string) => {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = () => {
+        resolve(true);
+      };
+      script.onerror = () => {
+        resolve(false);
+      };
+      document.body.appendChild(script);
+    });
+  };
 
-  // Movie titles mapping
-  const movieTitles: { [key: string]: string } = {
-    'akash': 'Akash',
-    'gujarattitans': 'Gujarat Titans Registrations - TATA IPL 2026',
-    'dhurandharrevenge': 'Dhurandhar The Revenge',
-    'dhurandhar': 'Dhurandhar',
-    'kanchana': 'Kanchana (2011)',
-    'keralastory2': 'The Kerala Story 2: Goes Beyond',
-    'ustaadsingh': 'Ustaad Bhagat Singh',
-    'toxic': 'Toxic: A Fairy Tale for Grown-ups',
+  useEffect(() => {
+    loadScript('https://checkout.razorpay.com/v1/checkout.js');
+  }, []);
+
+  useEffect(() => {
+    if (movieTitle) {
+      fetch(`http://localhost:3000/api/bookings/shows/${movieTitle}`)
+        .then(res => {
+          if (!res.ok) {
+            throw new Error('Failed to fetch show details');
+          }
+          return res.json();
+        })
+        .then(data => {
+            if (Array.isArray(data)) {
+                setShows(data);
+            } else {
+                setError('No shows available for this movie.');
+            }
+        })
+        .catch(err => {
+          setError(err.message);
+          console.error(err);
+        });
+    }
+  }, [movieTitle]);
+
+  const handleSeatSelection = (seat: Seat) => {
+    setSelectedSeats(prev => {
+      if (prev.find(s => s.id === seat.id)) {
+        return prev.filter(s => s.id !== seat.id);
+      }
+      return [...prev, seat];
+    });
+  };
+
+  const handleBooking = async () => {
+    if (selectedSeats.length === 0 || !selectedShow) {
+      alert("Please select seats first.");
+      return;
+    }
+
+    const userString = localStorage.getItem('user');
+    if (!userString) {
+      alert("Please log in to book tickets.");
+      navigate('/'); 
+      return;
+    }
+    const user = JSON.parse(userString);
+    
+    try {
+      const res = await fetch('http://localhost:3000/api/payments/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          show_id: selectedShow.show_id,
+          seats: selectedSeats.map(s => s.id),
+          amount: getTotalPrice(),
+          currency: 'INR',
+        }),
+      });
+
+      if (res.ok) {
+        const { order } = await res.json();
+        
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID, 
+          amount: order.amount,
+          currency: order.currency,
+          name: 'CineVault',
+          description: 'Movie Ticket Booking',
+          order_id: order.razorpay_order_id,
+          handler: async function (response: any) {
+            const verifyRes = await fetch('http://localhost:3000/api/payments/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            if (verifyRes.ok) {
+              alert('Payment successful!');
+              setShowSeatModal(false);
+              setSelectedSeats([]);
+              // Refetch shows to update booked seats
+              if (movieTitle) {
+                  fetch(`http://localhost:3000/api/bookings/shows/${movieTitle}`)
+                      .then(res => res.json())
+                      .then(data => setShows(data));
+              }
+            } else {
+              alert('Payment verification failed.');
+            }
+          },
+          prefill: {
+            name: user.name,
+            email: user.email,
+            contact: user.phone_number
+          },
+          theme: {
+            color: '#3399cc'
+          }
+        };
+        
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+
+      } else {
+        const errorData = await res.json();
+        alert(`Booking failed: ${errorData.message}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred during booking.');
+    }
   };
 
   // Generate dates
@@ -59,264 +187,92 @@ const BookingPage: FC = () => {
     return dates;
   };
 
-  // Sample theater data
-  const theaters: Theater[] = [
-    {
-      name: 'PVR: Orion Mall, Dr Rajkumar Road',
-      location: 'Bangalore',
-      showtimes: [
-        { time: '08:00 PM', format: format || '2D', language: language || 'Hindi' },
-        { time: '08:45 PM', format: format || '2D', language: language || 'Hindi' },
-        { time: '09:15 PM', format: 'ATMOS', language: language || 'Hindi' },
-        { time: '10:00 PM', format: format || '2D', language: language || 'Hindi' },
-        { time: '10:10 PM', format: format || '2D', language: language || 'Hindi' },
-        { time: '10:15 PM', format: 'GOLD', language: language || 'Hindi' },
-        { time: '10:30 PM', format: 'PXL', language: language || 'Hindi' },
-        { time: '10:30 PM', format: 'GOLD', language: language || 'Hindi' },
-      ],
-    },
-    {
-      name: 'INOX: Megaplex Mall of Asia Bangalore',
-      location: 'Bangalore',
-      showtimes: [
-        { time: '08:45 PM', format: 'LASER', language: language || 'Hindi' },
-        { time: '09:15 PM', format: 'LASER', language: language || 'Hindi' },
-        { time: '09:30 PM', format: 'INSIGNIA', language: language || 'Hindi' },
-        { time: '09:45 PM', format: format || '2D', language: language || 'Hindi' },
-        { time: '10:00 PM', format: 'LASER', language: language || 'Hindi' },
-        { time: '10:05 PM', format: 'LASER', language: language || 'Hindi' },
-        { time: '10:15 PM', format: 'INSIGNIA', language: language || 'Hindi' },
-        { time: '10:15 PM', format: 'LASER', language: language || 'Hindi' },
-        { time: '10:30 PM', format: 'LASER', language: language || 'Hindi' },
-      ],
-    },
-    {
-      name: 'Cinepolis: Nexus Shantiniketan, Bengaluru',
-      location: 'Bangalore',
-      showtimes: [
-        { time: '09:30 PM', format: 'ATMOS', language: language || 'Hindi' },
-        { time: '09:35 PM', format: format || '2D', language: language || 'Hindi' },
-        { time: '09:50 PM', format: '4DX', language: language || 'Hindi' },
-        { time: '10:00 PM', format: format || '2D', language: language || 'Hindi' },
-        { time: '10:30 PM', format: 'DOLBY 7.1', language: language || 'Hindi' },
-      ],
-    },
-  ];
-
   const dates = generateDates();
-  const movieTitle = movieTitles[movieKey || ''] || movieKey || '';
+
+  const groupedShows = shows.reduce((acc, show) => {
+    const key = show.theater_name;
+    if (!acc[key]) {
+      acc[key] = [];
+    }
+    acc[key].push(show);
+    return acc;
+  }, {} as Record<string, Show[]>);
+
+  const getTotalPrice = () => {
+    return selectedSeats.reduce((total, seat) => total + seat.amount, 0);
+  };
 
   return (
     <div className="booking-page">
-      {/* Navigation Bar */}
-      <nav className="navbar">
-        <div className="navbar-container">
-          <div className="logo" onClick={() => navigate('/home')}>
-            <img src="/logo (2).png" alt="CineVault" className="logo-img" />
-            CineVault
+      <div className="header">
+        <button className="back-btn" onClick={() => navigate(-1)}>←</button>
+        <h1>{movieTitle}</h1>
+        <p>{language} • {format}</p>
+      </div>
+
+      <div className="date-selector">
+        {dates.map((date, index) => (
+          <div
+            key={index}
+            className={`date-card ${selectedDate === index ? 'selected' : ''}`}
+            onClick={() => setSelectedDate(index)}
+          >
+            <p>{date.day}</p>
+            <p>{date.dateNum}</p>
+            <p>{date.month}</p>
           </div>
-          <button className="book-tickets-btn">Book Tickets</button>
-        </div>
-      </nav>
-
-      {/* Booking Header */}
-      <div className="booking-header">
-        <h1 className="booking-title">{movieTitle} - ({language})</h1>
-        <div className="booking-pills">
-          <span className="pill">Movie runtime: 3h 49m</span>
-          <span className="pill">A</span>
-          <span className="pill">Action</span>
-          <span className="pill">Thriller</span>
-        </div>
+        ))}
       </div>
 
-      {/* Dates and Filters Section */}
-      <div className="dates-and-filters">
-        <div className="dates-scroll">
-          {dates.map((date, index) => (
-            <div
-              key={index}
-              className={`date-item ${selectedDate === index ? 'active' : ''}`}
-              onClick={() => setSelectedDate(index)}
-            >
-              <div className="date-item-day">{date.day}</div>
-              <div className="date-item-number">{date.dateNum}</div>
-              <div className="date-item-month">{date.month}</div>
-            </div>
-          ))}
-        </div>
+      {error && <p className="error-message">{error}</p>}
 
-        <div className="filters">
-          <button className="filter-btn">
-            {language} - {format} <span className="dropdown-arrow">▼</span>
-          </button>
-          <button className="filter-btn">
-            Price Range <span className="dropdown-arrow">▼</span>
-          </button>
-          <button className="filter-btn">
-            Special Formats <span className="dropdown-arrow">▼</span>
-          </button>
-          <button className="filter-btn">
-            Other Filters <span className="dropdown-arrow">▼</span>
-          </button>
-          <button className="filter-btn">
-            Preferred Time <span className="dropdown-arrow">▼</span>
-          </button>
-          <button className="filter-btn">
-            Sort By <span className="dropdown-arrow">▼</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Theaters Section */}
-      <div className="theaters-container">
-        {theaters.map((theater, index) => (
-          <div key={index} className="theater-card">
-            <div className="theater-header">
-              <div className="theater-info">
-                <h3 className="theater-name">{theater.name}</h3>
-                {/* Theater icons and details */}
-              </div>
-              <button className="like-btn">♡</button>
-            </div>
-
-            <div className="showtimes-grid">
-              {theater.showtimes.map((showtime, stIndex) => (
+      <div className="theaters-list">
+        {Object.entries(groupedShows).map(([theaterName, theaterShows]) => (
+          <div key={theaterName} className="theater-section">
+            <h3>{theaterName}</h3>
+            <div className="showtimes">
+              {theaterShows.map((show) => (
                 <button
-                  key={stIndex}
-                  className={`showtime-btn ${selectedShowtime === `${index}-${stIndex}` ? 'selected' : ''}`}
+                  key={show.show_id}
+                  className="showtime-btn"
                   onClick={() => {
-                    setSelectedShowtime(`${index}-${stIndex}`);
+                    setSelectedShow(show);
                     setShowSeatModal(true);
                   }}
                 >
-                  <div className="showtime-time">{showtime.time}</div>
-                  <div className="showtime-format">{showtime.format}</div>
+                  {new Date(show.movie_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </button>
               ))}
-            </div>
-
-            <div className="theater-footer">
-              <span className="non-cancellable">Non-cancellable</span>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Seat Selection Modal */}
-      {showSeatModal && (
-        <div className="seat-modal-overlay" onClick={() => setShowSeatModal(false)}>
-          <div className="seat-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close-btn" onClick={() => setShowSeatModal(false)}>×</button>
-            
-            <div className="theater-layout">
-              <div className="seats-container">
-                {/* Row labels and seats */}
-                <div className="rows-wrapper">
-                  <div className="row-labels">
-                    {['N', 'M', 'L', 'K', 'J', 'H', 'G', 'F', 'E', 'D', 'C', 'B', 'A'].map((row) => (
-                      <div key={row} className="row-label">{row}</div>
-                    ))}
+      {showSeatModal && selectedShow && (
+        <div className="modal-overlay" onClick={() => setShowSeatModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="close-btn" onClick={() => setShowSeatModal(false)}>×</button>
+            <h2>Select Your Seats</h2>
+            <div className="seat-map">
+              {selectedShow.seats.map(seat => {
+                const isBooked = selectedShow.bookedSeatIds.includes(seat.id);
+                const isSelected = selectedSeats.some(s => s.id === seat.id);
+                return (
+                  <div
+                    key={seat.id}
+                    className={`seat ${isBooked ? 'booked' : ''} ${isSelected ? 'selected' : ''}`}
+                    onClick={() => !isBooked && handleSeatSelection(seat)}
+                  >
+                    {seat.seat_number}
                   </div>
-
-                  <div className="seat-rows">
-                    {/* ₹800 PRIME ROWS */}
-                    <div className="section-label">₹800 PRIME ROWS</div>
-                    {['N', 'M', 'L', 'K', 'J'].map((row, _) => (
-                      <div key={row} className="seat-row">
-                        {Array.from({ length: 16 }).map((_, seatIdx) => {
-                          const seatId = `${row}${seatIdx + 1}`;
-                          return (
-                            <button
-                              key={seatId}
-                              className={`seat ${bookedSeats.includes(seatId) ? 'booked' : ''} ${selectedSeats.includes(seatId) ? 'selected' : ''}`}
-                              onClick={() => {
-                                if (bookedSeats.includes(seatId)) return;
-                                if (selectedSeats.includes(seatId)) {
-                                  setSelectedSeats(selectedSeats.filter(s => s !== seatId));
-                                } else {
-                                  setSelectedSeats([...selectedSeats, seatId]);
-                                }
-                              }}
-                              disabled={bookedSeats.includes(seatId)}
-                            >
-                              {seatIdx + 1}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ))}
-
-                    {/* ₹600 CLASSIC PLUS ROWS */}
-                    <div className="section-label">₹600 CLASSIC PLUS ROWS</div>
-                    {['H', 'G', 'F', 'E', 'D', 'C'].map((row, _) => (
-                      <div key={row} className="seat-row">
-                        {Array.from({ length: 14 }).map((_, seatIdx) => {
-                          const seatId = `${row}${seatIdx + 1}`;
-                          return (
-                            <button
-                              key={seatId}
-                              className={`seat ${bookedSeats.includes(seatId) ? 'booked' : ''} ${selectedSeats.includes(seatId) ? 'selected' : ''}`}
-                              onClick={() => {
-                                if (bookedSeats.includes(seatId)) return;
-                                if (selectedSeats.includes(seatId)) {
-                                  setSelectedSeats(selectedSeats.filter(s => s !== seatId));
-                                } else {
-                                  setSelectedSeats([...selectedSeats, seatId]);
-                                }
-                              }}
-                              disabled={bookedSeats.includes(seatId)}
-                            >
-                              {seatIdx + 1}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ))}
-
-                    {/* ₹600 CLASSIC ROWS */}
-                    <div className="section-label">₹600 CLASSIC ROWS</div>
-                    {['B', 'A'].map((row, _) => (
-                      <div key={row} className="seat-row">
-                        {Array.from({ length: 16 }).map((_, seatIdx) => {
-                          const seatId = `${row}${seatIdx + 1}`;
-                          return (
-                            <button
-                              key={seatId}
-                              className={`seat ${bookedSeats.includes(seatId) ? 'booked' : ''} ${selectedSeats.includes(seatId) ? 'selected' : ''}`}
-                              onClick={() => {
-                                if (bookedSeats.includes(seatId)) return;
-                                if (selectedSeats.includes(seatId)) {
-                                  setSelectedSeats(selectedSeats.filter(s => s !== seatId));
-                                } else {
-                                  setSelectedSeats([...selectedSeats, seatId]);
-                                }
-                              }}
-                              disabled={bookedSeats.includes(seatId)}
-                            >
-                              {seatIdx + 1}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Screen */}
-                <div className="screen">
-                  <div className="screen-label">All eyes this way please</div>
-                </div>
-              </div>
+                );
+              })}
             </div>
-
-            <div className="seat-modal-footer">
-              <button 
-                className="continue-btn" 
-                disabled={selectedSeats.length === 0}
-              >
-                Continue
-              </button>
+            <div className="screen-line">Screen This Way</div>
+            <div className="booking-summary">
+              <p>Selected Seats: {selectedSeats.map(s => s.seat_number).join(', ')}</p>
+              <p>Total Price: ₹{getTotalPrice()}</p>
+              <button className="submit-btn" onClick={handleBooking}>Pay ₹{getTotalPrice()}</button>
             </div>
           </div>
         </div>

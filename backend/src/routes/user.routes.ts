@@ -1,9 +1,10 @@
-import { signup, login, getUser } from "../controllers/user.controller.js";
+import { signup, login, getUser, getBookingHistory } from "../controllers/user.controller.js";
 import { Router } from "express";
 
 const router = Router();
 router.route("/signup").post(signup);
 router.route("/login").post(login);
-router.route("/getUser").get(getUser);
+router.route("/:id").get(getUser);
+router.route("/:id/bookings").get(getBookingHistory);
 
 export default router;

@@ -45,19 +45,18 @@
 }
 
 .book-tickets-btn {
-  background-color: #3258a8;
-  color: white;
+  background-color: #f5c518;
+  color: #000;
   border: none;
-  padding: 0.7rem 1.5rem;
-  border-radius: 4px;
-  font-weight: 600;
+  padding: 1rem 2rem;
+  border-radius: 5px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 1rem;
+  font-weight: bold;
+  font-size: 1.2rem;
 }
 
 .book-tickets-btn:hover {
-  background-color: #254078;
+  background-color: #d9a50d;
   transform: translateY(-2px);
 }
 
@@ -97,6 +96,11 @@
   object-fit: cover;
   border-radius: 8px;
   box-shadow: 0 10px 40px rgba(50, 88, 168, 0.3);
+}
+
+.movie-poster {
+  width: 100%;
+  border-radius: 8px;
 }
 
 .about-section {
@@ -144,9 +148,15 @@
 }
 
 .cast-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  display: flex;
   gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.cast-member {
+  background-color: #333;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
 }
 
 .cast-item {
@@ -197,6 +207,57 @@
 .back-btn:hover {
   background-color: #254078;
   transform: translateY(-2px);
+}
+
+.back-arrow {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  margin-right: 1rem;
+}
+
+.header-bar {
+  display: flex;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #1a1a1a;
+}
+
+.header-bar h1 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.movie-content {
+  display: flex;
+  padding: 2rem;
+  gap: 2rem;
+}
+
+.details-section {
+  flex: 2;
+}
+
+.details-section h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.rating {
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.details-section p {
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.details-section h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 /* Booking Modal Styles */

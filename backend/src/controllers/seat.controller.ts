@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { db } from "../config/db.js";
+
 interface Seat {
     id: number;
     seatArr:[{
@@ -7,6 +8,7 @@ interface Seat {
         amount:number;
     }]
 }
+
 export const createSeats = async (req: Request, res: Response) => {
     try {
         const { id, seatArr}:Seat = req.body;

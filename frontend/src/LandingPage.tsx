@@ -42,8 +42,9 @@ const LandingPage: FC = () => {
       });
 
       if (res.ok) {
-        const data = await res.json();
-        console.log('Login success:', data);
+        const { user } = await res.json();
+        localStorage.setItem('user', JSON.stringify(user));
+        console.log('Login success:', user);
         setEmail('');
         setPassword('');
         setShowModal(false);
