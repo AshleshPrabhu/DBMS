@@ -8,6 +8,12 @@ interface Seat {
     amount: number;
 }
 
+interface Snack {
+    name: string;
+    price: number;
+    quantity: number;
+}
+
 interface Booking {
     booking_id: number;
     created_at: string;
@@ -16,6 +22,7 @@ interface Booking {
     movie_time: string;
     theater_name: string;
     seats: Seat[];
+    snacks: Snack[];
 }
 
 const ProfilePage: FC = () => {
@@ -83,7 +90,13 @@ const ProfilePage: FC = () => {
                                 <p><strong>Show Time:</strong> {new Date(booking.movie_time).toLocaleString()}</p>
                                 <p><strong>Booked on:</strong> {new Date(booking.created_at).toLocaleDateString()}</p>
                                 <p><strong>Seats:</strong> {booking.seats.map(s => s.seat_number).join(', ')}</p>
-                                <p><strong>Total Amount:</strong> ₹{booking.seats.reduce((acc, seat) => acc + seat.amount, 0)}</p>
+                                {booking.snacks && booking.snacks.length > 0 && (
+                                    <p><strong>Snacks:</strong> {booking.snacks.map(s => `${s.name} (x${s.quantity})`).join(', ')}</p>
+                                )}
+                                <p><strong>Total Amount:</strong> ₹{
+                                    booking.seats.reduce((acc, seat) => acc + seat.amount, 0) +
+                                    (booking.snacks ? booking.snacks.reduce((acc, snack) => acc + snack.price * snack.quantity, 0) : 0)
+                                }</p>
                             </div>
                         </div>
                     ))}

@@ -125,9 +125,19 @@ export async function getBookingHistory(req: Request, res: Response) {
                  WHERE bs.booking_id = ?`,
                 [booking.booking_id]
             );
+
+            const [snacks]: any = await db.execute(
+                `SELECT s.name, s.price, bs.quantity 
+                 FROM booking_snack bs
+                 JOIN snacks s ON bs.snack_id = s.id
+                 WHERE bs.booking_id = ?`,
+                [booking.booking_id]
+            );
+
             bookingHistory.push({
                 ...booking,
-                seats
+                seats,
+                snacks
             });
         }
 

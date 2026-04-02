@@ -436,10 +436,33 @@
   margin-top: 0.5rem;
 }
 
+
 .seat-row {
   display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.row-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  width: 20px;
+  text-align: right;
+}
+
+.row-price {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #cccccc;
+  width: 50px;
+  text-align: left;
+}
+
+.seats {
+  display: flex;
   gap: 0.5rem;
-  justify-content: center;
   flex-wrap: wrap;
 }
 
@@ -479,8 +502,76 @@
   color: #ffffff;
 }
 
-.screen {
+.snacks-section {
   margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #333;
+}
+
+.snacks-section h3 {
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.snacks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.snack-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: #1a1a1a;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.snack-image {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.snack-details {
+  flex-grow: 1;
+}
+
+.snack-name {
+  color: #fff;
+  font-weight: bold;
+}
+
+.snack-price {
+  color: #ccc;
+}
+
+.snack-quantity {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.snack-quantity button {
+  background-color: #333;
+  color: #fff;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.snack-quantity span {
+  color: #fff;
+  font-weight: bold;
+}
+
+
+.screen {
+  margin-bottom: 2rem;
   padding: 1.5rem;
   background-color: rgba(50, 88, 168, 0.2);
   border: 2px solid #3258a8;
@@ -496,6 +587,28 @@
   margin-top: 1rem;
   transform: scaleY(3.33);
   transform-origin: center;
+}
+
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #333333;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ffffff;
+}
+
+.legend-item .seat {
+  width: 20px;
+  height: 20px;
+  cursor: default;
 }
 
 .seat-modal-footer {

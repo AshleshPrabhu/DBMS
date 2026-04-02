@@ -22,8 +22,18 @@ TRUNCATE TABLE `screen`;
 TRUNCATE TABLE `theater`;
 TRUNCATE TABLE `location`;
 TRUNCATE TABLE `users`;
+TRUNCATE TABLE `snacks`;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- -----------------------------------------------------------------
+-- SNACKS
+-- -----------------------------------------------------------------
+INSERT INTO `snacks` (`id`, `name`, `price`, `image`) VALUES
+(1, 'Popcorn', 150, 'https://imgs.search.brave.com/P-EAjnaicDWi8gzsALk8gDPSQdcZB-NQDAqs0085hsQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdDQu/ZGVwb3NpdHBob3Rv/cy5jb20vMTQ2NzAy/NjAvMjU0MzgvaS80/NTAvZGVwb3NpdHBo/b3Rvc18yNTQzODU1/NjItc3RvY2stcGhv/dG8tc2FsdHktc25h/Y2tzLXByZXR6ZWxz/LWNoaXBzLWNyYWNr/ZXJzLmpwZw'),
+(2, 'Nachos', 200, 'https://imgs.search.brave.com/P-EAjnaicDWi8gzsALk8gDPSQdcZB-NQDAqs0085hsQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdDQu/ZGVwb3NpdHBob3Rv/cy5jb20vMTQ2NzAy/NjAvMjU0MzgvaS80/NTAvZGVwb3NpdHBo/b3Rvc18yNTQzODU1/NjItc3RvY2stcGhv/dG8tc2FsdHktc25h/Y2tzLXByZXR6ZWxz/LWNoaXBzLWNyYWNr/ZXJzLmpwZw'),
+(3, 'Coke', 80, 'https://imgs.search.brave.com/P-EAjnaicDWi8gzsALk8gDPSQdcZB-NQDAqs0085hsQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdDQu/ZGVwb3NpdHBob3Rv/cy5jb20vMTQ2NzAy/NjAvMjU0MzgvaS80/NTAvZGVwb3NpdHBo/b3Rvc18yNTQzODU1/NjItc3RvY2stcGhv/dG8tc2FsdHktc25h/Y2tzLXByZXR6ZWxz/LWNoaXBzLWNyYWNr/ZXJzLmpwZw'),
+(4, 'Samosa', 120, 'https://imgs.search.brave.com/P-EAjnaicDWi8gzsALk8gDPSQdcZB-NQDAqs0085hsQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdDQu/ZGVwb3NpdHBob3Rv/cy5jb20vMTQ2NzAy/NjAvMjU0MzgvaS80/NTAvZGVwb3NpdHBo/b3Rvc18yNTQzODU1/NjItc3RvY2stcGhv/dG8tc2FsdHktc25h/Y2tzLXByZXR6ZWxz/LWNoaXBzLWNyYWNr/ZXJzLmpwZw');
 
 -- -----------------------------------------------------------------
 -- USERS

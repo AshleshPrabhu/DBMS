@@ -1,0 +1,45 @@
+.success-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #fff;
+    text-align: center;
+    padding: 2rem;
+}
+
+.success-page h1 {
+    color: #4CAF50;
+    margin-bottom: 1rem;
+}
+
+.booking-summary {
+    background-color: #1a1a1a;
+    padding: 2rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    max-width: 500px;
+    width: 100%;
+}
+
+.booking-summary h2 {
+    margin-bottom: 1rem;
+}
+
+.home-btn {
+    padding: 1rem 2rem;
+    background-color: #3258a8;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.home-btn:hover {
+    background-color: #254078;
+}

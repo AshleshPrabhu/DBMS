@@ -19,6 +19,13 @@ interface Show {
   bookedSeatIds: number[];
 }
 
+interface Snack {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+}
+
 const BookingPage: FC = () => {
   const { movieTitle, language, format } = useParams<{ movieTitle: string; language: string; format: string }>();
   const navigate = useNavigate();
@@ -27,6 +34,8 @@ const BookingPage: FC = () => {
   const [selectedShow, setSelectedShow] = useState<Show | null>(null);
   const [showSeatModal, setShowSeatModal] = useState(false);
   const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
+  const [snacks, setSnacks] = useState<Snack[]>([]);
+  const [selectedSnacks, setSelectedSnacks] = useState<Record<number, number>>({});
   const [error, setError] = useState<string>('');
   
   const loadScript = (src: string) => {
@@ -45,6 +54,10 @@ const BookingPage: FC = () => {
 
   useEffect(() => {
     loadScript('https://checkout.razorpay.com/v1/checkout.js');
+    fetch('http://localhost:3000/api/snacks')
+      .then(res => res.json())
+      .then(data => setSnacks(data))
+      .catch(err => console.error("Failed to fetch snacks", err));
   }, []);
 
   useEffect(() => {
@@ -79,6 +92,18 @@ const BookingPage: FC = () => {
     });
   };
 
+  const handleSnackQuantityChange = (snackId: number, quantity: number) => {
+    setSelectedSnacks(prev => {
+      const newSnacks = { ...prev };
+      if (quantity <= 0) {
+        delete newSnacks[snackId];
+      } else {
+        newSnacks[snackId] = quantity;
+      }
+      return newSnacks;
+    });
+  };
+
   const handleBooking = async () => {
     if (selectedSeats.length === 0 || !selectedShow) {
       alert("Please select seats first.");
@@ -93,6 +118,11 @@ const BookingPage: FC = () => {
     }
     const user = JSON.parse(userString);
     
+    const snacksToBook = Object.entries(selectedSnacks).map(([id, quantity]) => ({
+      id: Number(id),
+      quantity,
+    }));
+
     try {
       const res = await fetch('http://localhost:3000/api/payments/create-order', {
         method: 'POST',
@@ -100,7 +130,8 @@ const BookingPage: FC = () => {
         body: JSON.stringify({
           user_id: user.id,
           show_id: selectedShow.show_id,
-          seats: selectedSeats.map(s => s.id),
+          seat_ids: selectedSeats.map(s => s.id),
+          snacks: snacksToBook,
           amount: getTotalPrice(),
           currency: 'INR',
         }),
@@ -124,19 +155,31 @@ const BookingPage: FC = () => {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
+                user_id: user.id,
+                show_id: selectedShow.show_id,
+                seat_ids: selectedSeats.map(s => s.id),
+                snacks: snacksToBook,
               }),
             });
 
             if (verifyRes.ok) {
-              alert('Payment successful!');
-              setShowSeatModal(false);
-              setSelectedSeats([]);
-              // Refetch shows to update booked seats
-              if (movieTitle) {
-                  fetch(`http://localhost:3000/api/bookings/shows/${movieTitle}`)
-                      .then(res => res.json())
-                      .then(data => setShows(data));
-              }
+                const selectedSnackDetails = snacksToBook.map(snack => {
+                    const snackInfo = snacks.find(s => s.id === snack.id);
+                    return { ...snackInfo, quantity: snack.quantity };
+                });
+
+                navigate('/success', {
+                    state: {
+                        bookingDetails: {
+                            movie_name: movieTitle,
+                            theater_name: selectedShow.theater_name,
+                            movie_time: selectedShow.movie_time,
+                            seats: selectedSeats,
+                            snacks: selectedSnackDetails,
+                            totalAmount: getTotalPrice(),
+                        }
+                    }
+                });
             } else {
               alert('Payment verification failed.');
             }
@@ -199,38 +242,52 @@ const BookingPage: FC = () => {
   }, {} as Record<string, Show[]>);
 
   const getTotalPrice = () => {
-    return selectedSeats.reduce((total, seat) => total + seat.amount, 0);
+    const seatsPrice = selectedSeats.reduce((total, seat) => total + seat.amount, 0);
+    const snacksPrice = Object.entries(selectedSnacks).reduce((total, [snackId, quantity]) => {
+      const snack = snacks.find(s => s.id === Number(snackId));
+      return total + (snack ? snack.price * quantity : 0);
+    }, 0);
+    return seatsPrice + snacksPrice;
   };
 
   return (
     <div className="booking-page">
-      <div className="header">
+      <div className="booking-header">
         <button className="back-btn" onClick={() => navigate(-1)}>←</button>
-        <h1>{movieTitle}</h1>
-        <p>{language} • {format}</p>
+        <h1 className="booking-title">{movieTitle}</h1>
+        <div className="booking-pills">
+          <span className="pill">{language}</span>
+          <span className="pill">{format}</span>
+        </div>
       </div>
 
-      <div className="date-selector">
-        {dates.map((date, index) => (
-          <div
-            key={index}
-            className={`date-card ${selectedDate === index ? 'selected' : ''}`}
-            onClick={() => setSelectedDate(index)}
-          >
-            <p>{date.day}</p>
-            <p>{date.dateNum}</p>
-            <p>{date.month}</p>
-          </div>
-        ))}
+      <div className="dates-and-filters">
+        <div className="dates-scroll">
+          {dates.map((date, index) => (
+            <div
+              key={index}
+              className={`date-item ${selectedDate === index ? 'active' : ''}`}
+              onClick={() => setSelectedDate(index)}
+            >
+              <span className="date-item-day">{date.day}</span>
+              <span className="date-item-number">{date.dateNum}</span>
+              <span className="date-item-month">{date.month}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {error && <p className="error-message">{error}</p>}
 
-      <div className="theaters-list">
+      <div className="theaters-container">
         {Object.entries(groupedShows).map(([theaterName, theaterShows]) => (
-          <div key={theaterName} className="theater-section">
-            <h3>{theaterName}</h3>
-            <div className="showtimes">
+          <div key={theaterName} className="theater-card">
+            <div className="theater-header">
+              <div className="theater-info">
+                <h3 className="theater-name">{theaterName}</h3>
+              </div>
+            </div>
+            <div className="showtimes-grid">
               {theaterShows.map((show) => (
                 <button
                   key={show.show_id}
@@ -240,7 +297,7 @@ const BookingPage: FC = () => {
                     setShowSeatModal(true);
                   }}
                 >
-                  {new Date(show.movie_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <span className="showtime-time">{new Date(show.movie_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </button>
               ))}
             </div>
@@ -249,30 +306,82 @@ const BookingPage: FC = () => {
       </div>
 
       {showSeatModal && selectedShow && (
-        <div className="modal-overlay" onClick={() => setShowSeatModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="close-btn" onClick={() => setShowSeatModal(false)}>×</button>
+        <div className="seat-modal-overlay" onClick={() => setShowSeatModal(false)}>
+          <div className="seat-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setShowSeatModal(false)}>×</button>
             <h2>Select Your Seats</h2>
-            <div className="seat-map">
-              {selectedShow.seats.map(seat => {
-                const isBooked = selectedShow.bookedSeatIds.includes(seat.id);
-                const isSelected = selectedSeats.some(s => s.id === seat.id);
-                return (
-                  <div
-                    key={seat.id}
-                    className={`seat ${isBooked ? 'booked' : ''} ${isSelected ? 'selected' : ''}`}
-                    onClick={() => !isBooked && handleSeatSelection(seat)}
-                  >
-                    {seat.seat_number}
+            <div className="theater-layout">
+              <div className="screen">Screen This Way</div>
+              <div className="seats-container">
+                {Object.entries(
+                  selectedShow.seats.reduce((acc, seat) => {
+                    const row = seat.seat_number.charAt(0);
+                    if (!acc[row]) {
+                      acc[row] = [];
+                    }
+                    acc[row].push(seat);
+                    return acc;
+                  }, {} as Record<string, Seat[]>)
+                ).map(([row, seats]) => (
+                  <div className="seat-row" key={row}>
+                    <div className="row-label">{row}</div>
+                    <div className="seats">
+                      {seats.map(seat => {
+                        const isBooked = selectedShow.bookedSeatIds.includes(seat.id);
+                        const isSelected = selectedSeats.some(s => s.id === seat.id);
+                        return (
+                          <div
+                            key={seat.id}
+                            className={`seat ${isBooked ? 'booked' : ''} ${isSelected ? 'selected' : ''}`}
+                            onClick={() => !isBooked && handleSeatSelection(seat)}
+                          >
+                            {seat.seat_number.substring(1)}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="row-price">₹{seats[0].amount}</div>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
-            <div className="screen-line">Screen This Way</div>
-            <div className="booking-summary">
+            <div className="snacks-section">
+              <h3>Add Some Snacks</h3>
+              <div className="snacks-container">
+                {snacks.map(snack => (
+                  <div key={snack.id} className="snack-item">
+                    <img src={snack.image} alt={snack.name} className="snack-image" />
+                    <div className="snack-details">
+                      <span className="snack-name">{snack.name}</span>
+                      <span className="snack-price">₹{snack.price}</span>
+                    </div>
+                    <div className="snack-quantity">
+                      <button onClick={() => handleSnackQuantityChange(snack.id, (selectedSnacks[snack.id] || 0) - 1)}>-</button>
+                      <span>{selectedSnacks[snack.id] || 0}</span>
+                      <button onClick={() => handleSnackQuantityChange(snack.id, (selectedSnacks[snack.id] || 0) + 1)}>+</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="legend">
+              <div className="legend-item">
+                <div className="seat available"></div>
+                <span>Available</span>
+              </div>
+              <div className="legend-item">
+                <div className="seat selected"></div>
+                <span>Selected</span>
+              </div>
+              <div className="legend-item">
+                <div className="seat booked"></div>
+                <span>Booked</span>
+              </div>
+            </div>
+            <div className="seat-modal-footer">
               <p>Selected Seats: {selectedSeats.map(s => s.seat_number).join(', ')}</p>
               <p>Total Price: ₹{getTotalPrice()}</p>
-              <button className="submit-btn" onClick={handleBooking}>Pay ₹{getTotalPrice()}</button>
+              <button className="continue-btn" onClick={handleBooking}>Pay ₹{getTotalPrice()}</button>
             </div>
           </div>
         </div>

@@ -1,5 +1,48 @@
 import type { Request, Response } from "express";
 import { db } from "../config/db.js";
+export const createBooking = async (req: Request, res: Response) => {
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+        const { show_id, seat_ids, snacks, user_id, razorpay_order_id } = req.body;
+
+        if (!show_id || !seat_ids || !user_id) {
+            return res.status(400).json({ message: "show_id, seat_ids and user_id are required" });
+        }
+
+        const [bookingResult]: any = await connection.execute(
+            `INSERT INTO booking (user_id, show_id, razorpay_order_id) VALUES (?, ?, ?)`,
+            [user_id, show_id, razorpay_order_id]
+        );
+        const booking_id = bookingResult.insertId;
+
+        for (const seat_id of seat_ids) {
+            await connection.execute(
+                `INSERT INTO booking_seat (booking_id, show_id, seat_id) VALUES (?, ?, ?)`,
+                [booking_id, show_id, seat_id]
+            );
+        }
+
+        if (snacks && snacks.length > 0) {
+            for (const snack of snacks) {
+                await connection.execute(
+                    `INSERT INTO booking_snack (booking_id, snack_id, quantity) VALUES (?, ?, ?)`,
+                    [booking_id, snack.id, snack.quantity]
+                );
+            }
+        }
+
+        await connection.commit();
+        res.status(201).json({ message: "Booking created successfully", booking_id });
+
+    } catch (error) {
+        await connection.rollback();
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    } finally {
+        connection.release();
+    }
+};
 
 export async function getShowDetailsByMovieName(req: Request, res: Response) {
     try {

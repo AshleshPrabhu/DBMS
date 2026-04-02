@@ -91,3 +91,19 @@ CREATE TABLE payment (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (booking_id) REFERENCES booking(id) ON DELETE CASCADE
 );
+
+CREATE TABLE snacks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    price INT NOT NULL,
+    image TEXT
+);
+
+CREATE TABLE booking_snack (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    booking_id INT NOT NULL,
+    snack_id INT NOT NULL,
+    quantity INT NOT NULL,
+    FOREIGN KEY (booking_id) REFERENCES booking(id) ON DELETE CASCADE,
+    FOREIGN KEY (snack_id) REFERENCES snacks(id) ON DELETE CASCADE
+);
