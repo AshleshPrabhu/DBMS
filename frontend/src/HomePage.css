@@ -181,6 +181,21 @@
   font-size: 1rem;
 }
 
+.language-filter, .sort-filter {
+  background-color: #1a1a1a;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 20px;
+  padding: 0.8rem 1.2rem;
+  margin-left: 1rem;
+  font-size: 1rem;
+}
+
+.language-filter:focus, .sort-filter:focus {
+  outline: none;
+  border-color: #3258a8;
+}
+
 .search-suggestions {
   position: absolute;
   top: 100%;
@@ -377,6 +392,11 @@
   right: -25px;
 }
 
+.slider-arrow:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .movie-card {
@@ -451,4 +471,42 @@
 
 .profile-btn:hover {
   background-color: #e0b416;
+}
+
+// Genre Filter Pills
+.filters-container {
+  max-width: 1200px;
+  margin: 1.5rem auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.genre-filter-container {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.genre-pill {
+  padding: 0.6rem 1.5rem;
+  border-radius: 20px;
+  background-color: #1a1a1a;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #333;
+  font-weight: 500;
+}
+
+.genre-pill:hover {
+  background-color: #252525;
+  border-color: #444;
+}
+
+.genre-pill.active {
+  background-color: #3258a8;
+  color: #fff;
+  border-color: #3258a8;
 }

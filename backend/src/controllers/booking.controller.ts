@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { db } from "../config/db.js";
+
 export const createBooking = async (req: Request, res: Response) => {
     const connection = await db.getConnection();
     try {
@@ -8,6 +9,16 @@ export const createBooking = async (req: Request, res: Response) => {
 
         if (!show_id || !seat_ids || !user_id) {
             return res.status(400).json({ message: "show_id, seat_ids and user_id are required" });
+        }
+
+        const [existingBookings]: any = await connection.execute(
+            `SELECT seat_id FROM booking_seat WHERE show_id = ? AND seat_id IN (?)`,
+            [show_id, seat_ids]
+        );
+
+        if (existingBookings.length > 0) {
+            const bookedSeatIds = existingBookings.map((b: any) => b.seat_id);
+            return res.status(409).json({ message: `Seats ${bookedSeatIds.join(', ')} are already booked.` });
         }
 
         const [bookingResult]: any = await connection.execute(
@@ -75,12 +86,12 @@ export async function getShowDetailsByMovieName(req: Request, res: Response) {
 
         for (const show of shows) {
             const [seats]: any = await db.execute(
-                `SELECT id, seat_number, amount FROM seat WHERE screen_id = ?`,
+                `SELECT id, seat_number, amount FROM seat WHERE screen_id = ? ORDER BY seat_number ASC`,
                 [show.screen_id]
             );
 
             const [bookedSeats]: any = await db.execute(
-                `SELECT seat_id FROM booking_seat WHERE show_id = ?`,
+                `SELECT DISTINCT seat_id FROM booking_seat WHERE show_id = ?`,
                 [show.show_id]
             );
 

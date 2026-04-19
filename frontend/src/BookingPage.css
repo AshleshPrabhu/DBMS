@@ -260,6 +260,14 @@
   flex: 1;
 }
 
+.screen-info {
+  background-color: #3258a8;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
 .theater-name {
   font-size: 1.1rem;
   font-weight: 700;

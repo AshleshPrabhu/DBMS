@@ -52,6 +52,19 @@ const BookingPage: FC = () => {
     });
   };
 
+  const generateDates = () => {
+    const dates = [];
+    const today = new Date();
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() + i);
+      dates.push(date);
+    }
+    return dates;
+  };
+
+  const dates = generateDates();
+
   useEffect(() => {
     loadScript('https://checkout.razorpay.com/v1/checkout.js');
     fetch('http://localhost:3000/api/snacks')
@@ -62,18 +75,24 @@ const BookingPage: FC = () => {
 
   useEffect(() => {
     if (movieTitle) {
-      fetch(`http://localhost:3000/api/bookings/shows/${movieTitle}`)
+      const date = dates[selectedDate];
+      const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      
+      setError('');
+      setShows([]); 
+
+      fetch(`http://localhost:3000/api/shows/${movieTitle}/${dateString}`)
         .then(res => {
           if (!res.ok) {
-            throw new Error('Failed to fetch show details');
+            throw new Error('Failed to fetch show details for the selected date.');
           }
           return res.json();
         })
         .then(data => {
-            if (Array.isArray(data)) {
+            if (Array.isArray(data) && data.length > 0) {
                 setShows(data);
             } else {
-                setError('No shows available for this movie.');
+                setError('No shows available for this movie on the selected date.');
             }
         })
         .catch(err => {
@@ -81,7 +100,7 @@ const BookingPage: FC = () => {
           console.error(err);
         });
     }
-  }, [movieTitle]);
+  }, [movieTitle, selectedDate]);
 
   const handleSeatSelection = (seat: Seat) => {
     setSelectedSeats(prev => {
@@ -102,6 +121,15 @@ const BookingPage: FC = () => {
       }
       return newSnacks;
     });
+  };
+
+  const getTotalPrice = () => {
+    const seatsPrice = selectedSeats.reduce((total, seat) => total + seat.amount, 0);
+    const snacksPrice = Object.entries(selectedSnacks).reduce((total, [snackId, quantity]) => {
+      const snack = snacks.find(s => s.id === Number(snackId));
+      return total + (snack ? snack.price * quantity : 0);
+    }, 0);
+    return seatsPrice + snacksPrice;
   };
 
   const handleBooking = async () => {
@@ -207,33 +235,8 @@ const BookingPage: FC = () => {
     }
   };
 
-  // Generate dates
-  const generateDates = () => {
-    const dates = [];
-    const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-    const today = new Date();
-    
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(date.getDate() + i);
-      const day = dayNames[date.getDay()];
-      const dateNum = date.getDate();
-      const month = date.toLocaleString('default', { month: 'short' }).toUpperCase();
-      
-      dates.push({
-        day,
-        dateNum,
-        month,
-      });
-    }
-    
-    return dates;
-  };
-
-  const dates = generateDates();
-
   const groupedShows = shows.reduce((acc, show) => {
-    const key = show.theater_name;
+    const key = `${show.theater_name} - ${show.screen_name}`; // Group by both theater and screen
     if (!acc[key]) {
       acc[key] = [];
     }
@@ -241,14 +244,11 @@ const BookingPage: FC = () => {
     return acc;
   }, {} as Record<string, Show[]>);
 
-  const getTotalPrice = () => {
-    const seatsPrice = selectedSeats.reduce((total, seat) => total + seat.amount, 0);
-    const snacksPrice = Object.entries(selectedSnacks).reduce((total, [snackId, quantity]) => {
-      const snack = snacks.find(s => s.id === Number(snackId));
-      return total + (snack ? snack.price * quantity : 0);
-    }, 0);
-    return seatsPrice + snacksPrice;
-  };
+  const formattedDates = dates.map(date => ({
+    day: date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase(),
+    dateNum: date.getDate(),
+    month: date.toLocaleString('default', { month: 'short' }).toUpperCase(),
+  }));
 
   return (
     <div className="booking-page">
@@ -263,7 +263,7 @@ const BookingPage: FC = () => {
 
       <div className="dates-and-filters">
         <div className="dates-scroll">
-          {dates.map((date, index) => (
+          {formattedDates.map((date, index) => (
             <div
               key={index}
               className={`date-item ${selectedDate === index ? 'active' : ''}`}
@@ -280,11 +280,11 @@ const BookingPage: FC = () => {
       {error && <p className="error-message">{error}</p>}
 
       <div className="theaters-container">
-        {Object.entries(groupedShows).map(([theaterName, theaterShows]) => (
-          <div key={theaterName} className="theater-card">
+        {Object.entries(groupedShows).map(([groupName, theaterShows]) => (
+          <div key={groupName} className="theater-card">
             <div className="theater-header">
               <div className="theater-info">
-                <h3 className="theater-name">{theaterName}</h3>
+                <h3 className="theater-name">{groupName}</h3>
               </div>
             </div>
             <div className="showtimes-grid">
@@ -293,6 +293,7 @@ const BookingPage: FC = () => {
                   key={show.show_id}
                   className="showtime-btn"
                   onClick={() => {
+                    setSelectedSeats([]);
                     setSelectedShow(show);
                     setShowSeatModal(true);
                   }}

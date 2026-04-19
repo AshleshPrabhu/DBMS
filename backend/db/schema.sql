@@ -46,6 +46,10 @@ CREATE TABLE movies (
     about TEXT,
     reviews INT,
     actors JSON,
+    language VARCHAR(50),
+    genre VARCHAR(255),
+    rating FLOAT,
+    release_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

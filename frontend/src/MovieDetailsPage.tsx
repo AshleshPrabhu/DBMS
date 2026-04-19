@@ -50,7 +50,8 @@ const MovieDetailsPage: FC = () => {
   }, [movieTitle]);
 
   const handleBooking = (): void => {
-    setShowBookingModal(true);
+    // Directly navigate to the booking page with default values
+    navigate(`/booking/${movieTitle}/Kannada/3D`);
   };
 
   if (error) {
@@ -94,63 +95,7 @@ const MovieDetailsPage: FC = () => {
         </div>
       </div>
 
-      {showBookingModal && (
-        <div className="booking-modal-overlay" onClick={() => setShowBookingModal(false)}>
-          <div className="booking-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close-btn" onClick={() => {
-              setShowBookingModal(false);
-              setSelectedLanguage(null);
-              setSelectedFormat(null);
-            }}>×</button>
 
-            <h2 className="modal-title">{movie.name}</h2>
-
-            {/* Language Selection */}
-            <div className="modal-section">
-              <h3 className="modal-label">Select Language</h3>
-              <div className="selection-options">
-                {['Hindi', 'Kannada', 'English'].map((lang) => (
-                  <button
-                    key={lang}
-                    className={`option-btn ${selectedLanguage === lang ? 'selected' : ''}`}
-                    onClick={() => setSelectedLanguage(lang)}
-                  >
-                    {lang}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Format Selection */}
-            <div className="modal-section">
-              <h3 className="modal-label">Select Format</h3>
-              <div className="selection-options">
-                {['2D', '3D', 'IMAX'].map((format) => (
-                  <button
-                    key={format}
-                    className={`option-btn ${selectedFormat === format ? 'selected' : ''}`}
-                    onClick={() => setSelectedFormat(format)}
-                  >
-                    {format}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {selectedLanguage && selectedFormat && (
-              <button 
-                className="modal-action-btn"
-                onClick={() => {
-                  navigate(`/booking/${movie.name}/${selectedLanguage}/${selectedFormat}`);
-                  setShowBookingModal(false);
-                }}
-              >
-                Continue to Theaters
-              </button>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

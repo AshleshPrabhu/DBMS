@@ -8,13 +8,23 @@ interface Movie {
   id: number;
   name: string;
   image: string;
+  language: string;
+  genre: string;
+  rating: number;
+  release_date: string;
 }
 
 const HomePage: FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [currentMovieSlide, setCurrentMovieSlide] = useState<number>(0);
-  const [movies, setMovies] = useState<Movie[]>([]);
+  const [allMovies, setAllMovies] = useState<Movie[]>([]);
+  const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
+  const [language, setLanguage] = useState<string>('');
+  const [genre, setGenre] = useState<string>('');
+  const [sort, setSort] = useState<string>('');
+
+  const genres = ['All', 'Action', 'Comedy', 'Drama', 'Horror', 'Sci-Fi', 'Romance'];
 
   useEffect(() => {
     fetch('http://localhost:3000/api/movies')
@@ -24,19 +34,57 @@ const HomePage: FC = () => {
         }
         return res.json();
       })
-      .then(data => setMovies(data))
+      .then(data => {
+        setAllMovies(data);
+        setFilteredMovies(data);
+      })
       .catch(error => console.error('Error fetching movies:', error));
   }, []);
 
+  useEffect(() => {
+    let movies = [...allMovies];
+
+    if (searchQuery) {
+      movies = movies.filter(movie => movie.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+
+    if (language) {
+      movies = movies.filter(movie => movie.language === language);
+    }
+
+    if (genre) {
+      movies = movies.filter(movie => movie.genre === genre);
+    }
+
+    if (sort) {
+      switch (sort) {
+        case 'a-z':
+          movies.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        case 'top-rated':
+          movies.sort((a, b) => b.rating - a.rating);
+          break;
+        case 'latest':
+          movies.sort((a, b) => new Date(b.release_date).getTime() - new Date(a.release_date).getTime());
+          break;
+        default:
+          break;
+      }
+    }
+
+    setFilteredMovies(movies);
+    setCurrentMovieSlide(0);
+  }, [searchQuery, language, genre, sort, allMovies]);
+
   const handlePrevSlide = (): void => {
     setCurrentMovieSlide((prev) =>
-      prev === 0 ? Math.max(0, movies.length - 4) : prev - 1
+      prev === 0 ? Math.max(0, filteredMovies.length - 4) : prev - 1
     );
   };
 
   const handleNextSlide = (): void => {
     setCurrentMovieSlide((prev) =>
-      prev >= movies.length - 4 ? 0 : prev + 1
+      prev >= filteredMovies.length - 4 ? 0 : prev + 1
     );
   };
 
@@ -57,6 +105,22 @@ const HomePage: FC = () => {
               value={searchQuery}
               onChange={(e): void => setSearchQuery(e.target.value)}
             />
+            <select className="language-filter" value={language} onChange={(e) => setLanguage(e.target.value)}>
+              <option value="">All Languages</option>
+              <option value="English">English</option>
+              <option value="Hindi">Hindi</option>
+              <option value="Spanish">Spanish</option>
+              <option value="Kannada">Kannada</option>
+              <option value="Telugu">Telugu</option>
+              <option value="Malayalam">Malayalam</option>
+              <option value="Tamil">Tamil</option>
+            </select>
+            <select className="sort-filter" value={sort} onChange={(e) => setSort(e.target.value)}>
+                <option value="">Sort By</option>
+                <option value="a-z">A-Z</option>
+                <option value="top-rated">Top Rated</option>
+                <option value="latest">Latest</option>
+            </select>
           </div>
           <div className="nav-right">
             <button className="profile-btn" onClick={() => navigate('/profile')}>Profile</button>
@@ -64,24 +128,48 @@ const HomePage: FC = () => {
         </div>
       </nav>
 
+      <div className="filters-container">
+        <div className="genre-filter-container">
+          {genres.map((g) => (
+              <div 
+                key={g} 
+                className={`genre-pill ${
+                  (g === 'All' && genre === '') || genre === g ? 'active' : ''
+                }`} 
+                onClick={() => setGenre(g === 'All' ? '' : g)}
+              >
+                  {g}
+              </div>
+          ))}
+        </div>
+      </div>
+
       {/* Movie Slider */}
       <div className="movie-slider">
         <h2>Now Showing</h2>
         <div className="slider-container">
-          <button className="slider-arrow prev" onClick={handlePrevSlide}>
-            &lt;
-          </button>
-          <div className="movie-list" style={{ transform: `translateX(-${currentMovieSlide * 25}%)` }}>
-            {movies.map((movie) => (
-              <div key={movie.id} className="movie-card" onClick={() => navigate(`/movie/${movie.name}`)}>
-                <img src={movie.image} alt={movie.name} />
-                <p>{movie.name}</p>
+          {filteredMovies.length > 0 ? (
+            <>
+              <button className="slider-arrow prev" onClick={handlePrevSlide} disabled={currentMovieSlide === 0}>
+                &lt;
+              </button>
+              <div className="movie-list" style={{ transform: `translateX(-${currentMovieSlide * 25}%)` }}>
+                {filteredMovies.map((movie) => (
+                  <div key={movie.id} className="movie-card" onClick={() => navigate(`/movie/${movie.name}`)}>
+                    <img src={movie.image} alt={movie.name} />
+                    <p>{movie.name}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <button className="slider-arrow next" onClick={handleNextSlide}>
-            &gt;
-          </button>
+              <button className="slider-arrow next" onClick={handleNextSlide} disabled={currentMovieSlide >= filteredMovies.length - 4}>
+                &gt;
+              </button>
+            </>
+          ) : (
+            <div className="no-movies-found">
+              <p>No movies found matching your criteria. Try adjusting your filters.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

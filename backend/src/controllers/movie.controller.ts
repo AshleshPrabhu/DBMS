@@ -3,15 +3,15 @@ import { db } from "../config/db.js";
 
 export async function createMovie(req: Request, res: Response) {
     try {
-        const { name, image, about, reviews, actors } = req.body;
+        const { name, image, about, reviews, actors, language, genre, rating, release_date } = req.body;
         if(!name){
             return res.status(400).json({ message: "Movie name is required" });
         }
         const [result]: any = await db.execute(
-            "INSERT INTO movies (name, image, about, reviews, actors) VALUES (?, ?, ?, ?, ?)",
-            [name, image, about, reviews, actors]
+            "INSERT INTO movies (name, image, about, reviews, actors, language, genre, rating, release_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [name, image, about, reviews, actors, language, genre, rating, release_date]
         );
-        return res.status(201).json({ id: result.insertId, name, image, about, reviews, actors })
+        return res.status(201).json({ id: result.insertId, name, image, about, reviews, actors, language, genre, rating, release_date })
     } catch (error) {
         return res.status(500).json({ message: "Internal server error", error });
     }
