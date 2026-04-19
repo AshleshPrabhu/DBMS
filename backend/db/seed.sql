@@ -13,10 +13,12 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
 TRUNCATE TABLE `payment`;
+TRUNCATE TABLE `booking_snack`;
 TRUNCATE TABLE `booking_seat`;
 TRUNCATE TABLE `booking`;
 TRUNCATE TABLE `shows`;
 TRUNCATE TABLE `movies`;
+TRUNCATE TABLE `seat_lock`;
 TRUNCATE TABLE `seat`;
 TRUNCATE TABLE `screen`;
 TRUNCATE TABLE `theater`;
@@ -113,11 +115,11 @@ INSERT INTO `seat` (`screen_id`, `seat_number`, `amount`) VALUES
 -- -----------------------------------------------------------------
 -- MOVIES
 -- -----------------------------------------------------------------
-INSERT INTO `movies` (`id`, `name`, `image`, `about`, `reviews`, `actors`) VALUES
-(1, 'Kalki 2898-AD',       'https://upload.wikimedia.org/wikipedia/en/0/02/Kalki_2898_AD_poster.jpg',                                         'A modern-day avatar of Vishnu, a Hindu god, who is believed to have descended to Earth to protect the world from evil forces.', 8500,  '["Prabhas", "Amitabh Bachchan", "Kamal Haasan", "Deepika Padukone", "Disha Patani"]'),
-(2, 'Fighter',             'https://upload.wikimedia.org/wikipedia/en/thumb/b/b8/Fighter_2024_film_poster.jpg/220px-Fighter_2024_film_poster.jpg','Top IAF aviators come together in the face of imminent danger to form Air Dragons. They must band together to overcome their inner demons and emerge victorious.', 7200,  '["Hrithik Roshan", "Deepika Padukone", "Anil Kapoor"]'),
-(3, 'Manjummel Boys',      'https://upload.wikimedia.org/wikipedia/en/thumb/5/57/Manjummel_Boys_poster.jpg/220px-Manjummel_Boys_poster.jpg',    'A group of friends from a small town called Manjummel, near Kochi, decide to have a vacation in Kodaikanal.',                9800,  '["Soubin Shahir", "Sreenath Bhasi", "Balu Varghese"]'),
-(4, 'Dune: Part Two',      'https://upload.wikimedia.org/wikipedia/en/5/55/Dune_Part_Two_poster.jpeg',                                         'Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.',    11200, '["Timothée Chalamet", "Zendaya", "Rebecca Ferguson"]');
+INSERT INTO `movies` (`id`, `name`, `image`, `about`, `reviews`, `actors`, `language`, `genre`, `rating`, `release_date`) VALUES
+(1, 'Kalki 2898-AD', 'https://upload.wikimedia.org/wikipedia/en/0/02/Kalki_2898_AD_poster.jpg', 'A modern-day avatar of Vishnu, a Hindu god, who is believed to have descended to Earth to protect the world from evil forces.', 8500, '["Prabhas", "Amitabh Bachchan", "Kamal Haasan", "Deepika Padukone", "Disha Patani"]', 'Telugu', 'Sci-Fi/Action', 8.5, '2024-06-27'),
+(2, 'Fighter', 'https://upload.wikimedia.org/wikipedia/en/thumb/b/b8/Fighter_2024_film_poster.jpg/220px-Fighter_2024_film_poster.jpg', 'Top IAF aviators come together in the face of imminent danger to form Air Dragons. They must band together to overcome their inner demons and emerge victorious.', 7200, '["Hrithik Roshan", "Deepika Padukone", "Anil Kapoor"]', 'Hindi', 'Action/Thriller', 7.8, '2024-01-25'),
+(3, 'Manjummel Boys', 'https://upload.wikimedia.org/wikipedia/en/thumb/5/57/Manjummel_Boys_poster.jpg/220px-Manjummel_Boys_poster.jpg', 'A group of friends from a small town called Manjummel, near Kochi, decide to have a vacation in Kodaikanal.', 9800, '["Soubin Shahir", "Sreenath Bhasi", "Balu Varghese"]', 'Malayalam', 'Survival/Thriller', 8.6, '2024-02-22'),
+(4, 'Dune: Part Two', 'https://upload.wikimedia.org/wikipedia/en/5/55/Dune_Part_Two_poster.jpeg', 'Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.', 11200, '["Timothée Chalamet", "Zendaya", "Rebecca Ferguson"]', 'English', 'Sci-Fi/Adventure', 8.8, '2024-03-01');
 
 -- -----------------------------------------------------------------
 -- SHOWS

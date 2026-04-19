@@ -27,7 +27,7 @@ interface Snack {
 }
 
 const BookingPage: FC = () => {
-  const { movieTitle, language, format } = useParams<{ movieTitle: string; language: string; format: string }>();
+  const { movieTitle } = useParams<{ movieTitle: string; language: string; format: string }>();
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(0);
   const [shows, setShows] = useState<Show[]>([]);
@@ -37,7 +37,13 @@ const BookingPage: FC = () => {
   const [snacks, setSnacks] = useState<Snack[]>([]);
   const [selectedSnacks, setSelectedSnacks] = useState<Record<number, number>>({});
   const [error, setError] = useState<string>('');
-  
+  const [lockedSeats, setLockedSeats] = useState<number[]>([]);
+  const [isSeatLocking, setIsSeatLocking] = useState(false);
+  const [lockTimer, setLockTimer] = useState<number | null>(null);
+  const [lockExpiresAt, setLockExpiresAt] = useState<Date | null>(null);
+  const [timerValue, setTimerValue] = useState<number | null>(null);
+
+
   const loadScript = (src: string) => {
     return new Promise((resolve) => {
       const script = document.createElement('script');
@@ -102,7 +108,113 @@ const BookingPage: FC = () => {
     }
   }, [movieTitle, selectedDate]);
 
+  useEffect(() => {
+    if (selectedShow) {
+        fetch(`http://localhost:3000/api/v1/seat-lock/locked/${selectedShow.show_id}`)
+            .then(res => res.json())
+            .then(data => setLockedSeats(data))
+            .catch(err => console.error("Failed to fetch locked seats", err));
+    }
+  }, [selectedShow]);
+
+  const handleRefreshLockedSeats = () => {
+    if (selectedShow) {
+      fetch(`http://localhost:3000/api/v1/seat-lock/locked/${selectedShow.show_id}`)
+        .then(res => res.json())
+        .then(data => setLockedSeats(data))
+        .catch(() => setLockedSeats([]));
+    }
+  };
+
+  const handleCloseModal = () => {
+    if (lockExpiresAt) {
+      return;
+    }
+    setShowSeatModal(false);
+    setLockExpiresAt(null);
+    if (lockTimer) clearInterval(lockTimer);
+    setTimerValue(null);
+    setSelectedSeats([]);
+  };
+
+  const handleLockSeats = async () => {
+    if (selectedSeats.length === 0 || !selectedShow) {
+        alert("Please select seats to lock.");
+        return;
+    }
+
+    const userString = localStorage.getItem('user');
+    if (!userString) {
+        alert("Please log in to lock seats.");
+        navigate('/');
+        return;
+    }
+    const user = JSON.parse(userString);
+
+    setIsSeatLocking(true);
+    try {
+        const res = await fetch('http://localhost:3000/api/v1/seat-lock/lock', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                show_id: selectedShow.show_id,
+                seat_ids: selectedSeats.map(s => s.id),
+                user_id: user.id,
+            }),
+        });
+
+        if (res.ok) {
+            const { expires_at } = await res.json();
+            const expirationTime = new Date(expires_at);
+            setLockExpiresAt(expirationTime);
+
+            const timer = setInterval(() => {
+                const remaining = Math.round((expirationTime.getTime() - new Date().getTime()) / 1000);
+                setTimerValue(remaining);
+                if (remaining <= 0) {
+                    clearInterval(timer);
+                    setLockExpiresAt(null);
+                    setTimerValue(null);
+                    
+
+                    if (selectedShow) {
+                        fetch(`http://localhost:3000/api/v1/seat-lock/locked/${selectedShow.show_id}`)
+                            .then(res => res.json())
+                            .then(data => setLockedSeats(data))
+                            .catch(() => setLockedSeats([]));
+                    }
+                }
+            }, 1000);
+            setLockTimer(timer);
+
+            fetch(`http://localhost:3000/api/v1/seat-lock/locked/${selectedShow.show_id}`)
+                .then(res => res.json())
+                .then(data => setLockedSeats(data));
+
+        } else {
+            const errorData = await res.json();
+            alert(`Failed to lock seats: ${errorData.message}`);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('An error occurred while locking seats.');
+    } finally {
+        setIsSeatLocking(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+        if (lockTimer) {
+            clearInterval(lockTimer);
+        }
+    };
+  }, [lockTimer]);
+
   const handleSeatSelection = (seat: Seat) => {
+    if (lockExpiresAt) {
+        return;
+    }
     setSelectedSeats(prev => {
       if (prev.find(s => s.id === seat.id)) {
         return prev.filter(s => s.id !== seat.id);
@@ -236,7 +348,7 @@ const BookingPage: FC = () => {
   };
 
   const groupedShows = shows.reduce((acc, show) => {
-    const key = `${show.theater_name} - ${show.screen_name}`; // Group by both theater and screen
+    const key = `${show.theater_name} - ${show.screen_name}`; 
     if (!acc[key]) {
       acc[key] = [];
     }
@@ -255,10 +367,6 @@ const BookingPage: FC = () => {
       <div className="booking-header">
         <button className="back-btn" onClick={() => navigate(-1)}>←</button>
         <h1 className="booking-title">{movieTitle}</h1>
-        <div className="booking-pills">
-          <span className="pill">{language}</span>
-          <span className="pill">{format}</span>
-        </div>
       </div>
 
       <div className="dates-and-filters">
@@ -280,36 +388,45 @@ const BookingPage: FC = () => {
       {error && <p className="error-message">{error}</p>}
 
       <div className="theaters-container">
-        {Object.entries(groupedShows).map(([groupName, theaterShows]) => (
-          <div key={groupName} className="theater-card">
-            <div className="theater-header">
-              <div className="theater-info">
-                <h3 className="theater-name">{groupName}</h3>
+        {Object.entries(groupedShows).map(([groupName, theaterShows]) => {
+          const screenName = theaterShows[0]?.screen_name;
+          return (
+            <div key={groupName} className="theater-card">
+              <div className="theater-header">
+                <div className="theater-info">
+                  <h3 className="theater-name">{groupName.split(' - ')[0]}</h3>
+                </div>
+                <div className="screen-info">
+                  <span>{screenName}</span>
+                </div>
+              </div>
+              <div className="showtimes-grid">
+                {theaterShows.map((show) => (
+                  <button
+                    key={show.show_id}
+                    className="showtime-btn"
+                    onClick={() => {
+                      setSelectedSeats([]);
+                      setSelectedShow(show);
+                      setShowSeatModal(true);
+                    }}
+                  >
+                    <span className="showtime-time">{new Date(show.movie_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </button>
+                ))}
               </div>
             </div>
-            <div className="showtimes-grid">
-              {theaterShows.map((show) => (
-                <button
-                  key={show.show_id}
-                  className="showtime-btn"
-                  onClick={() => {
-                    setSelectedSeats([]);
-                    setSelectedShow(show);
-                    setShowSeatModal(true);
-                  }}
-                >
-                  <span className="showtime-time">{new Date(show.movie_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {showSeatModal && selectedShow && (
-        <div className="seat-modal-overlay" onClick={() => setShowSeatModal(false)}>
+        <div className="seat-modal-overlay" onClick={handleCloseModal}>
           <div className="seat-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close-btn" onClick={() => setShowSeatModal(false)}>×</button>
+            <div className="modal-header">
+              <button className="refresh-btn" onClick={handleRefreshLockedSeats}>⟳</button>
+              <button className="modal-close-btn" onClick={handleCloseModal} disabled={!!lockExpiresAt}>×</button>
+            </div>
             <h2>Select Your Seats</h2>
             <div className="theater-layout">
               <div className="screen">Screen This Way</div>
@@ -330,11 +447,12 @@ const BookingPage: FC = () => {
                       {seats.map(seat => {
                         const isBooked = selectedShow.bookedSeatIds.includes(seat.id);
                         const isSelected = selectedSeats.some(s => s.id === seat.id);
+                        const isLocked = lockedSeats.includes(seat.id) && !isSelected;
                         return (
                           <div
                             key={seat.id}
-                            className={`seat ${isBooked ? 'booked' : ''} ${isSelected ? 'selected' : ''}`}
-                            onClick={() => !isBooked && handleSeatSelection(seat)}
+                            className={`seat ${isBooked ? 'booked' : ''} ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}`}
+                            onClick={() => !isBooked && !isLocked && handleSeatSelection(seat)}
                           >
                             {seat.seat_number.substring(1)}
                           </div>
@@ -382,7 +500,19 @@ const BookingPage: FC = () => {
             <div className="seat-modal-footer">
               <p>Selected Seats: {selectedSeats.map(s => s.seat_number).join(', ')}</p>
               <p>Total Price: ₹{getTotalPrice()}</p>
-              <button className="continue-btn" onClick={handleBooking}>Pay ₹{getTotalPrice()}</button>
+              {timerValue !== null && timerValue > 0 && (
+                <div className="timer">
+                    Time left to pay: {timerValue}s
+                </div>
+              )}
+              <button 
+                className="lock-btn" 
+                onClick={handleLockSeats} 
+                disabled={isSeatLocking || !!lockExpiresAt}
+              >
+                {isSeatLocking ? 'Locking...' : lockExpiresAt ? 'Seats Locked' : 'Lock Seats'}
+              </button>
+              <button className="continue-btn" onClick={handleBooking} disabled={!lockExpiresAt}>Pay ₹{getTotalPrice()}</button>
             </div>
           </div>
         </div>

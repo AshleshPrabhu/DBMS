@@ -10,6 +10,10 @@ interface MovieDetails {
   about: string;
   reviews: number;
   actors: string[];
+  language: string;
+  genre: string;
+  rating: number;
+  release_date: string;
 }
 
 const MovieDetailsPage: FC = () => {
@@ -17,9 +21,6 @@ const MovieDetailsPage: FC = () => {
   const navigate = useNavigate();
   const [movie, setMovie] = useState<MovieDetails | null>(null);
   const [error, setError] = useState<string>('');
-  const [showBookingModal, setShowBookingModal] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
-  const [selectedFormat, setSelectedFormat] = useState<string | null>(null);
 
   useEffect(() => {
     if (movieTitle) {
@@ -31,7 +32,6 @@ const MovieDetailsPage: FC = () => {
           return res.json();
         })
         .then(data => {
-            // The 'actors' field is a JSON string, so we need to parse it.
             if (data.actors && typeof data.actors === 'string') {
                 try {
                     data.actors = JSON.parse(data.actors);
@@ -50,8 +50,7 @@ const MovieDetailsPage: FC = () => {
   }, [movieTitle]);
 
   const handleBooking = (): void => {
-    // Directly navigate to the booking page with default values
-    navigate(`/booking/${movieTitle}/Kannada/3D`);
+    navigate(`/booking/${movieTitle}`);
   };
 
   if (error) {
@@ -78,7 +77,13 @@ const MovieDetailsPage: FC = () => {
         <div className="details-section">
           <h2>{movie.name}</h2>
           <div className="rating">
-            <span>⭐ {movie.reviews}</span>
+            <span className="rating-value">⭐ {movie.rating.toFixed(1)}/10</span>
+            <span className="reviews-count">{movie.reviews.toLocaleString()} reviews</span>
+          </div>
+          <div className="movie-info">
+            <span>{movie.language}</span>
+            <span>{movie.genre}</span>
+            <span>{new Date(movie.release_date).toLocaleDateString()}</span>
           </div>
           <p>{movie.about}</p>
           

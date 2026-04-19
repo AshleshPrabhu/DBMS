@@ -10,6 +10,7 @@ import showsRouter from "./routes/shows.routes.js";
 import bookingRouter from "./routes/booking.routes.js";
 import paymentRouter from "./routes/payment.routes.js";
 import snacksRouter from "./routes/snacks.routes.js";
+import seatLockRouter from "./routes/seat-lock.routes.js";
 
 const app = express();
 
@@ -30,5 +31,6 @@ app.use("/api/shows", showsRouter);
 app.use("/api/bookings", bookingRouter);
 app.use("/api/payments", paymentRouter);
 app.use("/api/snacks", snacksRouter);
+app.use("/api/v1/seat-lock", seatLockRouter);
 
 export default app

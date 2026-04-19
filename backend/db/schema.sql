@@ -70,6 +70,7 @@ CREATE TABLE booking (
     razorpay_order_id VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    status VARCHAR(20) DEFAULT 'pending',
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (show_id) REFERENCES shows(id) ON DELETE CASCADE
 );
@@ -110,4 +111,16 @@ CREATE TABLE booking_snack (
     quantity INT NOT NULL,
     FOREIGN KEY (booking_id) REFERENCES booking(id) ON DELETE CASCADE,
     FOREIGN KEY (snack_id) REFERENCES snacks(id) ON DELETE CASCADE
+);
+
+CREATE TABLE seat_lock (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    show_id INT NOT NULL,
+    seat_id INT NOT NULL,
+    user_id INT NOT NULL,
+    locked_at DATETIME NOT NULL,
+    expires_at DATETIME NOT NULL,
+    FOREIGN KEY (show_id) REFERENCES shows(id) ON DELETE CASCADE,
+    FOREIGN KEY (seat_id) REFERENCES seat(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
