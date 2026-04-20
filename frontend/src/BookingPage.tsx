@@ -443,28 +443,38 @@ const BookingPage: FC = () => {
                     acc[row].push(seat);
                     return acc;
                   }, {} as Record<string, Seat[]>)
-                ).map(([row, seats]) => (
-                  <div className="seat-row" key={row}>
-                    <div className="row-label">{row}</div>
-                    <div className="seats">
-                      {seats.map(seat => {
-                        const isBooked = selectedShow.bookedSeatIds.includes(seat.id);
-                        const isSelected = selectedSeats.some(s => s.id === seat.id);
-                        const isLocked = lockedSeats.includes(seat.id) && !isSelected;
-                        return (
-                          <div
-                            key={seat.id}
-                            className={`seat ${isBooked ? 'booked' : ''} ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}`}
-                            onClick={() => !isBooked && !isLocked && handleSeatSelection(seat)}
-                          >
-                            {seat.seat_number.substring(1)}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="row-price">₹{seats[0].amount}</div>
-                  </div>
-                ))}
+                )
+                  .sort(([a], [b]) => a.localeCompare(b))
+                  .map(([row, seats]) => {
+                    const sortedSeats = [...seats].sort((a, b) => {
+                      const numA = parseInt(a.seat_number.substring(1));
+                      const numB = parseInt(b.seat_number.substring(1));
+                      return numA - numB;
+                    });
+                    return (
+                      <div className="seat-row" key={row}>
+                        <div className="row-label">{row}</div>
+                        <div className="seats">
+                          {sortedSeats.map(seat => {
+                            const isBooked = selectedShow.bookedSeatIds.includes(seat.id);
+                            const isSelected = selectedSeats.some(s => s.id === seat.id);
+                            const isLocked = lockedSeats.includes(seat.id) && !isSelected;
+                            return (
+                              <div
+                                key={seat.id}
+                                className={`seat ${isBooked ? 'booked' : ''} ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}`}
+                                onClick={() => !isBooked && !isLocked && handleSeatSelection(seat)}
+                              >
+                                {seat.seat_number.substring(1)}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="row-price">₹{seats[0].amount}</div>
+                      </div>
+                    );
+                  })  
+                }
               </div>
             </div>
             <div className="snacks-section">
