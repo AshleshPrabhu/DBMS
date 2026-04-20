@@ -24,7 +24,7 @@ const HomePage: FC = () => {
   const [genre, setGenre] = useState<string>('');
   const [sort, setSort] = useState<string>('');
 
-  const genres = ['All', 'Action', 'Comedy', 'Drama', 'Horror', 'Sci-Fi', 'Romance'];
+  const genres = ['All', 'Action', 'Thriller', 'Drama', 'Horror', 'Sci-Fi', 'Romance'];
 
   useEffect(() => {
     fetch('http://localhost:3000/api/movies')
@@ -53,7 +53,7 @@ const HomePage: FC = () => {
     }
 
     if (genre) {
-      movies = movies.filter(movie => movie.genre === genre);
+      movies = movies.filter(movie => movie.genre.includes(genre));
     }
 
     if (sort) {
@@ -150,10 +150,36 @@ const HomePage: FC = () => {
         <div className="slider-container">
           {filteredMovies.length > 0 ? (
             <>
-              <button className="slider-arrow prev" onClick={handlePrevSlide} disabled={currentMovieSlide === 0}>
+              <button
+                className="slider-arrow prev"
+                onClick={() => {
+                  const el = document.querySelector('.movie-list') as HTMLElement;
+                  el?.scrollBy({ left: -480, behavior: 'smooth' });
+                }}
+              >
                 &lt;
               </button>
-              <div className="movie-list" style={{ transform: `translateX(-${currentMovieSlide * 25}%)` }}>
+
+              <div
+                className="movie-list"
+                ref={(el) => {
+                  if (!el) return;
+                  let isDown = false, startX = 0, scrollLeft = 0;
+                  el.onmousedown = (e) => {
+                    isDown = true;
+                    el.classList.add('dragging');
+                    startX = e.pageX - el.offsetLeft;
+                    scrollLeft = el.scrollLeft;
+                  };
+                  el.onmouseleave = () => { isDown = false; el.classList.remove('dragging'); };
+                  el.onmouseup   = () => { isDown = false; el.classList.remove('dragging'); };
+                  el.onmousemove = (e) => {
+                    if (!isDown) return;
+                    e.preventDefault();
+                    el.scrollLeft = scrollLeft - (e.pageX - el.offsetLeft - startX) * 1.5;
+                  };
+                }}
+              >
                 {filteredMovies.map((movie) => (
                   <div key={movie.id} className="movie-card" onClick={() => navigate(`/movie/${movie.name}`)}>
                     <img src={movie.image} alt={movie.name} />
@@ -161,13 +187,20 @@ const HomePage: FC = () => {
                   </div>
                 ))}
               </div>
-              <button className="slider-arrow next" onClick={handleNextSlide} disabled={currentMovieSlide >= filteredMovies.length - 4}>
+
+              <button
+                className="slider-arrow next"
+                onClick={() => {
+                  const el = document.querySelector('.movie-list') as HTMLElement;
+                  el?.scrollBy({ left: 480, behavior: 'smooth' });
+                }}
+              >
                 &gt;
               </button>
             </>
           ) : (
             <div className="no-movies-found">
-              <p>No movies found matching your criteria. Try adjusting your filters.</p>
+              <p>No movies found matching your criteria.</p>
             </div>
           )}
         </div>

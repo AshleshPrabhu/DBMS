@@ -35,16 +35,13 @@ const LandingPage: FC = () => {
     try {
       const res = await fetch('http://localhost:3000/api/users/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
       if (res.ok) {
         const { user } = await res.json();
         localStorage.setItem('user', JSON.stringify(user));
-        console.log('Login success:', user);
         setEmail('');
         setPassword('');
         setShowModal(false);
@@ -65,9 +62,7 @@ const LandingPage: FC = () => {
     try {
       const res = await fetch('http://localhost:3000/api/users/signup', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
       });
 
@@ -88,17 +83,9 @@ const LandingPage: FC = () => {
     }
   };
 
-  const handleNameChange = (e: ChangeEvent<HTMLInputElement>): void => {
-    setName(e.target.value);
-  };
-
-  const handleEmailChange = (e: ChangeEvent<HTMLInputElement>): void => {
-    setEmail(e.target.value);
-  };
-
-  const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>): void => {
-    setPassword(e.target.value);
-  };
+  const handleNameChange = (e: ChangeEvent<HTMLInputElement>): void => setName(e.target.value);
+  const handleEmailChange = (e: ChangeEvent<HTMLInputElement>): void => setEmail(e.target.value);
+  const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>): void => setPassword(e.target.value);
 
   return (
     <div className="App">
@@ -113,10 +100,7 @@ const LandingPage: FC = () => {
             <li><a href="#demo">Demo</a></li>
             <li><a href="#about">About</a></li>
           </ul>
-          <button 
-            className="signin-btn"
-            onClick={(): void => setShowModal(true)}
-          >
+          <button className="signin-btn" onClick={(): void => setShowModal(true)}>
             Sign In
           </button>
         </div>
@@ -124,31 +108,27 @@ const LandingPage: FC = () => {
 
       <div className="hero">
         <div className="hero-content">
-          <h1>Book Your Movie Tickets Instantly</h1>
+          <h1>Book Your Movie<br /><em>Tickets</em> Instantly</h1>
           <p>
-            Discover the latest blockbuster movies, stream trailers, and book your 
+            Discover the latest blockbuster movies, stream trailers, and book your
             favorite seats in advance. Enjoy a seamless cinema experience with CineVault.
           </p>
-          <button 
-            className="cta-btn"
-            onClick={(): void => setShowModal(true)}
-          >
+          <button className="cta-btn" onClick={(): void => setShowModal(true)}>
             Get started →
           </button>
         </div>
 
-        {/* Movie Poster Slideshow */}
         <div className="poster-container">
           <div className="poster-slide">
-            <img 
-              src={moviePosters[currentSlide]} 
+            <img
+              src={moviePosters[currentSlide]}
               alt="Movie Poster"
               className="poster-image"
             />
           </div>
           <div className="slide-indicators">
             {moviePosters.map((_: string, index: number) => (
-              <span 
+              <span
                 key={index}
                 className={`indicator ${index === currentSlide ? 'active' : ''}`}
                 onClick={(): void => setCurrentSlide(index)}
@@ -158,21 +138,18 @@ const LandingPage: FC = () => {
         </div>
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={(): void => setShowModal(false)}>
           <div className="modal-content" onClick={(e): void => e.stopPropagation()}>
-            <button 
-              className="close-btn"
-              onClick={(): void => setShowModal(false)}
-            >
+            <button className="close-btn" onClick={(): void => setShowModal(false)}>
               ×
             </button>
+
             {isLogin ? (
               <>
                 <h2>Sign In</h2>
-                {error && <p className="error-message">{error}</p>}
                 <form onSubmit={handleLoginSubmit}>
+                  {error && <p className="error-message">{error}</p>}
                   <div className="form-group">
                     <label htmlFor="email">Email</label>
                     <input
@@ -198,14 +175,17 @@ const LandingPage: FC = () => {
                   <button type="submit" className="submit-btn">Sign In</button>
                 </form>
                 <p className="signup-link">
-                  Don't have an account? <a href="#signup" onClick={() => setIsLogin(false)}>Sign up here</a>
+                  Don't have an account?{' '}
+                  <a href="#signup" onClick={() => { setIsLogin(false); setError(''); }}>
+                    Sign up here
+                  </a>
                 </p>
               </>
             ) : (
               <>
                 <h2>Sign Up</h2>
-                {error && <p className="error-message">{error}</p>}
                 <form onSubmit={handleSignupSubmit}>
+                  {error && <p className="error-message">{error}</p>}
                   <div className="form-group">
                     <label htmlFor="name">Name</label>
                     <input
@@ -218,10 +198,10 @@ const LandingPage: FC = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="email">Email</label>
+                    <label htmlFor="signup-email">Email</label>
                     <input
                       type="email"
-                      id="email"
+                      id="signup-email"
                       value={email}
                       onChange={handleEmailChange}
                       placeholder="Enter your email"
@@ -229,10 +209,10 @@ const LandingPage: FC = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="password">Password</label>
+                    <label htmlFor="signup-password">Password</label>
                     <input
                       type="password"
-                      id="password"
+                      id="signup-password"
                       value={password}
                       onChange={handlePasswordChange}
                       placeholder="Enter your password"
@@ -242,7 +222,10 @@ const LandingPage: FC = () => {
                   <button type="submit" className="submit-btn">Sign Up</button>
                 </form>
                 <p className="signup-link">
-                  Already have an account? <a href="#signin" onClick={() => setIsLogin(true)}>Sign in here</a>
+                  Already have an account?{' '}
+                  <a href="#signin" onClick={() => { setIsLogin(true); setError(''); }}>
+                    Sign in here
+                  </a>
                 </p>
               </>
             )}

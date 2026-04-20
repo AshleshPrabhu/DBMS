@@ -1,45 +1,197 @@
+/* ============================================================
+   SuccessPage.css — Booking Confirmation Redesign
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
+
+:root {
+  --bg:      #080808;
+  --bg-2:    #0e0e0e;
+  --border:  #1c1c1c;
+  --border-2:#242424;
+  --accent:  #3258a8;
+  --gold:    #e8a83a;
+  --green:   #3ecf6a;
+  --text:    #ffffff;
+  --text-2:  #777777;
+  --text-3:  #333333;
+}
+
+/* ── Base ─────────────────────────────────────────────────── */
 .success-page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    background-color: #000;
-    color: #fff;
-    text-align: center;
-    padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
 }
 
+/* subtle radial glow behind the card */
+.success-page::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -60%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(62, 207, 106, 0.055) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Check icon ───────────────────────────────────────────── */
+.success-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(62, 207, 106, 0.1);
+  border: 1.5px solid rgba(62, 207, 106, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  animation: popIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.success-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke: var(--green);
+  stroke-width: 2.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.6); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+/* ── Heading ──────────────────────────────────────────────── */
 .success-page h1 {
-    color: #4CAF50;
-    margin-bottom: 1rem;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 0.35rem;
+  letter-spacing: -0.5px;
+  animation: fadeUp 0.4s 0.1s ease both;
 }
 
+.success-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-2);
+  margin: 0 0 2rem;
+  animation: fadeUp 0.4s 0.15s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Booking summary card ─────────────────────────────────── */
 .booking-summary {
-    background-color: #1a1a1a;
-    padding: 2rem;
-    border-radius: 8px;
-    margin-bottom: 2rem;
-    max-width: 500px;
-    width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 460px;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+  animation: fadeUp 0.4s 0.2s ease both;
 }
 
 .booking-summary h2 {
-    margin-bottom: 1rem;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: -0.3px;
 }
 
+/* ── Detail rows ──────────────────────────────────────────── */
+.booking-summary p {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.7rem 1.5rem;
+  font-size: 0.82rem;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.booking-summary p:last-child {
+  border-bottom: none;
+  padding-bottom: 1.25rem;
+}
+
+.booking-summary p strong {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-3);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  min-width: 72px;
+}
+
+/* total amount row */
+.booking-summary p:last-of-type {
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.booking-summary p:last-of-type strong {
+  color: var(--text-3);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+/* ── Home button ──────────────────────────────────────────── */
 .home-btn {
-    padding: 1rem 2rem;
-    background-color: #3258a8;
-    color: #ffffff;
-    border: none;
-    border-radius: 6px;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.3s ease;
+  width: 100%;
+  max-width: 460px;
+  padding: 0.85rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.2px;
+  animation: fadeUp 0.4s 0.25s ease both;
 }
 
 .home-btn:hover {
-    background-color: #254078;
+  background: #3d68c0;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(50, 88, 168, 0.4);
+}
+
+/* ── Failed state ─────────────────────────────────────────── */
+.success-page .failed-title {
+  color: #e05b5b;
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 520px) {
+  .booking-summary h2 { font-size: 1rem; padding: 1rem 1.25rem; }
+  .booking-summary p  { padding: 0.6rem 1.25rem; }
+  .success-page h1    { font-size: 1.3rem; }
 }

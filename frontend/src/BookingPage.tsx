@@ -429,7 +429,10 @@ const BookingPage: FC = () => {
             </div>
             <h2>Select Your Seats</h2>
             <div className="theater-layout">
-              <div className="screen">Screen This Way</div>
+              <div className="screen-wrapper">
+                <div className="screen"></div>
+                <span className="screen-label">SCREEN</span>
+              </div>
               <div className="seats-container">
                 {Object.entries(
                   selectedShow.seats.reduce((acc, seat) => {

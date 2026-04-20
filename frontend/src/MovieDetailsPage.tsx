@@ -71,7 +71,7 @@ const MovieDetailsPage: FC = () => {
       </div>
 
       <div className="movie-content">
-        <div className="poster-section">
+        <div className="poster-section" style={{ '--poster-url': `url(${movie.image})` } as React.CSSProperties}>
           <img src={movie.image} alt={movie.name} className="movie-poster" />
         </div>
         <div className="details-section">
