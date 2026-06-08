@@ -96,8 +96,14 @@ const BookingPage: FC = () => {
         })
         .then(data => {
             if (Array.isArray(data) && data.length > 0) {
-                setShows(data);
-            } else {
+              const now = new Date();
+              const filtered = data.filter((show: Show) => new Date(show.movie_time) > now);
+              if (filtered.length > 0) {
+                  setShows(filtered);
+              } else {
+                  setError('No upcoming shows available for this movie on the selected date.');
+              }
+            }else {
                 setError('No shows available for this movie on the selected date.');
             }
         })
