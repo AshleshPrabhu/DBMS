@@ -14,6 +14,7 @@ A full-stack web application for browsing movies, selecting showtimes, and booki
   - [Tech Stack](#tech-stack)
   - [System Design](#system-design)
 - [Project Structure](#project-structure)
+- [Screenshots](#screenshots)
 - [Setup Instructions](#setup-instructions)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
@@ -139,6 +140,26 @@ The application is built with a classic client-server architecture:
 │
 └── README.md
 ```
+
+---
+
+## Screenshots
+
+<div align="center">
+
+| Image 1 | Image 2 | Image 3 | Image 4 |
+| --- | --- | --- | --- |
+| ![Image 1](images/image1.png) | ![Image 2](images/image2.png) | ![Image 3](images/image3.png) | ![Image 4](images/image4.png) |
+
+| Image 5 | Image 6 | Image 7 | Image 8 |
+| --- | --- | --- | --- |
+| ![Image 5](images/image5.png) | ![Image 6](images/image6.png) | ![Image 7](images/image7.png) | ![Image 8](images/image8.png) |
+
+| Image 9 | Image 10 |  |  |
+| --- | --- | --- | --- |
+| ![Image 9](images/image9.png) | ![Image 10](images/image10.png) |  |  |
+
+</div>
 
 ---
 
